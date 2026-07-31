@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Depends, Request, HTTPException
+from fastapi import FastAPI, Depends, Request, HTTPException, Header
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -20,6 +20,16 @@ try:
     seed_database(db_session)
 finally:
     db_session.close()
+
+# Configuración de PIN de Seguridad (por defecto: 2771 o configurable vía Variable de Entorno APP_PIN)
+APP_PIN = os.getenv("APP_PIN", "2771")
+
+def verify_pin(request: Request):
+    user_pin = request.headers.get("x-app-pin") or request.query_params.get("pin")
+    if not user_pin or user_pin != APP_PIN:
+        raise HTTPException(status_code=401, detail="PIN de acceso incorrecto o no autorizado")
+    return True
+
 
 # Crear App FastAPI
 app = FastAPI(
@@ -45,10 +55,21 @@ def read_root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 
+# Endpoint público para verificar PIN de inicio de sesión
+@app.post("/api/verify-pin")
+def check_pin(login: schemas.PinLogin):
+    """
+    Verifica el PIN de acceso introducido por el usuario.
+    """
+    if login.pin != APP_PIN:
+        raise HTTPException(status_code=401, detail="PIN de acceso incorrecto")
+    return {"status": "ok", "message": "Acceso concedido"}
+
+
 # ==========================================
-# ENDPOINTS PRINCIPALES (REQUERIDOS)
+# ENDPOINTS PRINCIPALES (PROTEGIDOS POR PIN)
 # ==========================================
-@app.post("/transactions/expense", response_model=schemas.TransactionResponse, status_code=201)
+@app.post("/transactions/expense", response_model=schemas.TransactionResponse, status_code=201, dependencies=[Depends(verify_pin)])
 def create_expense(expense: schemas.ExpenseCreate, db: Session = Depends(get_db)):
     """
     Registrar un gasto: Descuenta automáticamente el monto del saldo de la cuenta seleccionada.
@@ -56,7 +77,7 @@ def create_expense(expense: schemas.ExpenseCreate, db: Session = Depends(get_db)
     return crud.record_expense(db, expense)
 
 
-@app.post("/transactions/transfer", response_model=schemas.TransactionResponse, status_code=201)
+@app.post("/transactions/transfer", response_model=schemas.TransactionResponse, status_code=201, dependencies=[Depends(verify_pin)])
 def create_transfer(transfer: schemas.TransferCreate, db: Session = Depends(get_db)):
     """
     Mover saldo entre cuentas (ej. pasar $15.000 de MP Disponible a CuentaRUT).
@@ -64,7 +85,7 @@ def create_transfer(transfer: schemas.TransferCreate, db: Session = Depends(get_
     return crud.record_transfer(db, transfer)
 
 
-@app.get("/dashboard", response_model=schemas.DashboardSummary)
+@app.get("/dashboard", response_model=schemas.DashboardSummary, dependencies=[Depends(verify_pin)])
 def get_dashboard(db: Session = Depends(get_db)):
     """
     Retorna:
@@ -76,21 +97,21 @@ def get_dashboard(db: Session = Depends(get_db)):
 
 
 # ==========================================
-# ENDPOINTS COMPLEMENTARIOS DE APOYO
+# ENDPOINTS COMPLEMENTARIOS DE APOYO (PROTEGIDOS POR PIN)
 # ==========================================
-@app.get("/api/accounts", response_model=list[schemas.AccountResponse])
+@app.get("/api/accounts", response_model=list[schemas.AccountResponse], dependencies=[Depends(verify_pin)])
 def read_accounts(db: Session = Depends(get_db)):
     """Obtener lista de cuentas y sus saldos."""
     return crud.get_accounts(db)
 
 
-@app.get("/api/categories", response_model=list[schemas.CategoryResponse])
+@app.get("/api/categories", response_model=list[schemas.CategoryResponse], dependencies=[Depends(verify_pin)])
 def read_categories(db: Session = Depends(get_db)):
     """Obtener lista de categorías y presupuestos mensuales."""
     return crud.get_categories(db)
 
 
-@app.get("/api/transactions")
+@app.get("/api/transactions", dependencies=[Depends(verify_pin)])
 def read_transactions(limit: int = 20, db: Session = Depends(get_db)):
     """Obtener historial reciente de transacciones."""
     return crud.get_recent_transactions(db, limit=limit)

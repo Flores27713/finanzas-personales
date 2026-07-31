@@ -52,7 +52,32 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <div class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+    <!-- Pantalla de Bloqueo PIN -->
+    <div id="pin-lockscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-center space-y-6 shadow-2xl border border-slate-800">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
+                <i class="fa-solid fa-lock text-slate-950 text-2xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-white">Acceso Protegido</h2>
+                <p class="text-xs text-slate-400 mt-1">Ingresa tu PIN de seguridad para acceder a tus finanzas</p>
+            </div>
+            
+            <form onsubmit="handlePinLogin(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="input-pin" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="****" required autofocus
+                        class="w-full text-center tracking-[0.5em] text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl py-3 text-white focus:outline-none focus:border-teal-500">
+                </div>
+                <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-teal-600/25 transition-all active:scale-95">
+                    Ingresar
+                </button>
+            </form>
+            <p id="pin-error" class="text-xs text-rose-400 hidden">PIN de acceso incorrecto. Inténtalo de nuevo.</p>
+        </div>
+    </div>
+
+    <!-- Contenido de la Aplicación -->
+    <div id="app-content" class="max-w-4xl mx-auto px-4 pt-6 space-y-6 hidden">
         
         <!-- Header -->
         <header class="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -65,10 +90,15 @@
                     <p class="text-xs text-slate-400">Control de presupuesto & gastos hormiga</p>
                 </div>
             </div>
-            <button onclick="refreshData()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors text-sm flex items-center gap-2">
-                <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
-                <span class="hidden sm:inline">Actualizar</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="refreshData()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
+                    <span class="hidden sm:inline">Actualizar</span>
+                </button>
+                <button onclick="logoutPIN()" title="Bloquear App" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors text-sm">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Consolidado Top Banner -->
@@ -96,7 +126,7 @@
                 <div>
                     <div class="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
                         <span>Límite Hormiga Diario</span>
-                        <i class="fa-solid fa-[#f59e0b] fa-cookie-bite"></i>
+                        <i class="fa-solid fa-cookie-bite text-amber-400"></i>
                     </div>
                     <div class="text-2xl font-bold text-amber-300 mt-2" id="daily-hormiga-limit">
                         $0 / día
@@ -287,6 +317,14 @@
     <script>
         let cachedAccounts = [];
         let cachedCategories = [];
+        let currentPIN = localStorage.getItem('app_pin') || '';
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'x-app-pin': currentPIN
+            };
+        }
 
         function formatCLP(amount) {
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
@@ -310,9 +348,68 @@
             }, 3000);
         }
 
+        async function handlePinLogin(event) {
+            event.preventDefault();
+            const pinInput = document.getElementById('input-pin').value;
+            const errorMsg = document.getElementById('pin-error');
+
+            try {
+                const response = await fetch('/api/verify-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: pinInput })
+                });
+
+                if (response.ok) {
+                    currentPIN = pinInput;
+                    localStorage.setItem('app_pin', currentPIN);
+                    document.getElementById('pin-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    refreshData();
+                } else {
+                    errorMsg.classList.remove('hidden');
+                    document.getElementById('input-pin').value = '';
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        function logoutPIN() {
+            localStorage.removeItem('app_pin');
+            currentPIN = '';
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('pin-lockscreen').classList.remove('hidden');
+            document.getElementById('input-pin').value = '';
+        }
+
+        async function checkInitialAuth() {
+            if (!currentPIN) {
+                document.getElementById('pin-lockscreen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch('/dashboard', { headers: getAuthHeaders() });
+                if (res.status === 401) {
+                    logoutPIN();
+                } else if (res.ok) {
+                    document.getElementById('pin-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    refreshData();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
         async function fetchDashboard() {
             try {
-                const res = await fetch('/dashboard');
+                const res = await fetch('/dashboard', { headers: getAuthHeaders() });
+                if (res.status === 401) { logoutPIN(); return; }
                 const data = await res.json();
 
                 // Formatear Saldo Total
@@ -332,14 +429,13 @@
 
             } catch (err) {
                 console.error("Error al cargar dashboard:", err);
-                showToast("Error al cargar datos del servidor", "error");
             }
         }
 
         async function fetchCategories() {
             try {
-                const res = await fetch('/api/categories');
-                cachedCategories = await res.json();
+                const res = await fetch('/api/categories', { headers: getAuthHeaders() });
+                if (res.ok) cachedCategories = await res.json();
             } catch (err) {
                 console.error(err);
             }
@@ -347,9 +443,11 @@
 
         async function fetchTransactions() {
             try {
-                const res = await fetch('/api/transactions');
-                const txs = await res.json();
-                renderTransactions(txs);
+                const res = await fetch('/api/transactions', { headers: getAuthHeaders() });
+                if (res.ok) {
+                    const txs = await res.json();
+                    renderTransactions(txs);
+                }
             } catch (err) {
                 console.error(err);
             }
@@ -479,7 +577,7 @@
             try {
                 const response = await fetch('/transactions/expense', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
                         amount: amount,
                         account_id: acc.id,
@@ -491,6 +589,8 @@
                 if (response.ok) {
                     showToast(`Gasto registrado: ${name} (-${formatCLP(amount)})`);
                     refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al procesar gasto', 'error');
@@ -510,7 +610,7 @@
             try {
                 const response = await fetch('/transactions/expense', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({ amount, account_id, category_id, note: note || 'Gasto' })
                 });
 
@@ -519,6 +619,8 @@
                     closeModal('expense-modal');
                     document.getElementById('expense-form').reset();
                     refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al guardar gasto', 'error');
@@ -538,7 +640,7 @@
             try {
                 const response = await fetch('/transactions/transfer', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({ amount, account_id, destination_account_id, note: note || 'Traspaso entre cuentas' })
                 });
 
@@ -547,6 +649,8 @@
                     closeModal('transfer-modal');
                     document.getElementById('transfer-form').reset();
                     refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al realizar traspaso', 'error');
@@ -575,7 +679,7 @@
 
         // Inicializar al cargar
         window.addEventListener('DOMContentLoaded', () => {
-            refreshData();
+            checkInitialAuth();
         });
     </script>
 </body>

@@ -76,3 +76,8 @@ class DashboardSummary(BaseModel):
     categories_summary: List[CategorySpent]
     daily_hormiga_limit: float
     days_remaining_in_month: int
+
+
+class PinLogin(BaseModel):
+    pin: str
+
