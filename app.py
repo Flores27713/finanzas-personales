@@ -85,6 +85,15 @@ def create_transfer(transfer: schemas.TransferCreate, db: Session = Depends(get_
     return crud.record_transfer(db, transfer)
 
 
+@app.delete("/transactions/{transaction_id}", dependencies=[Depends(verify_pin)])
+def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
+    """
+    Eliminar una transacción errónea o duplicada y revertir automáticamente los saldos de las cuentas.
+    """
+    return crud.delete_transaction(db, transaction_id)
+
+
+
 @app.get("/dashboard", response_model=schemas.DashboardSummary, dependencies=[Depends(verify_pin)])
 def get_dashboard(db: Session = Depends(get_db)):
     """

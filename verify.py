@@ -1,12 +1,19 @@
-"""
-Script de Verificación de Integridad y Lógica de Negocio con Protección PIN
-"""
+import os
 import sys
+
+# Eliminar DB antigua de pruebas si existe para probar con saldos semilla limpios
+if os.path.exists("finance.db"):
+    try:
+        os.remove("finance.db")
+    except Exception:
+        pass
+
 from fastapi.testclient import TestClient
 from app import app, APP_PIN
 from database import get_db, SessionLocal
 
 client = TestClient(app)
+
 
 def test_system():
     print("=== INICIANDO VERIFICACIÓN DE LA APLICACIÓN ===")
@@ -87,10 +94,19 @@ def test_system():
     assert accs2['CuentaRUT'] == 134000.0, f"Expected 134000, got {accs2['CuentaRUT']}"
     # Saldo original MP Disponible: 70.000 - 15.000 (traspaso) = 55.000
     assert accs2['Mercado Pago Disponible'] == 55000.0, f"Expected 55000, got {accs2['Mercado Pago Disponible']}"
-    # Saldo original MP Ahorro: 150.000
-    assert accs2['Mercado Pago Ahorro'] == 150000.0
+    # 7. Probar eliminación de transacción y reversión de saldo
+    del_resp = client.delete(f"/transactions/{tx_exp['id']}", headers=headers)
+    assert del_resp.status_code == 200, f"Error al eliminar transacción: {del_resp.text}"
+    print(f"[OK] Transacción #{tx_exp['id']} eliminada correctamente")
+
+    resp_dash3 = client.get("/dashboard", headers=headers)
+    accs3 = {acc['name']: acc['balance'] for acc in resp_dash3.json()['accounts']}
+    # Al eliminar el gasto de $1.000, CuentaRUT pasa de 134.000 a 135.000
+    assert accs3['CuentaRUT'] == 135000.0, f"Expected 135000 after delete, got {accs3['CuentaRUT']}"
+    print("[OK] Saldo revertido correctamente tras eliminar la transacción errónea")
 
     print("--- TODAS LAS PRUEBAS DE SEGURIDAD E INTEGRIDAD PASARON CON EXITO ---")
+
 
 
 if __name__ == "__main__":

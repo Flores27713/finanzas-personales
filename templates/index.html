@@ -542,14 +542,45 @@
                             </div>
                             <div class="text-[11px] text-slate-400">${subtitle}</div>
                         </div>
-                        <div class="text-right space-y-0.5">
-                            <div>${amountText}</div>
-                            <div class="text-[10px] text-slate-500">${dateFormatted}</div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right space-y-0.5">
+                                <div>${amountText}</div>
+                                <div class="text-[10px] text-slate-500">${dateFormatted}</div>
+                            </div>
+                            <button onclick="deleteTransaction(${tx.id})" title="Eliminar y revertir saldo" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-400 transition-colors active:scale-90">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
+        async function deleteTransaction(txId) {
+            if (!confirm('¿Deseas eliminar esta transacción errónea y revertir automáticamente el saldo?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/transactions/${txId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    showToast('Transacción eliminada y saldo revertido');
+                    refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Error al eliminar transacción', 'error');
+                }
+            } catch (err) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+
 
         function populateSelects() {
             const expAccSelect = document.getElementById('exp-account');

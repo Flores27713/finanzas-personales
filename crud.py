@@ -102,6 +102,36 @@ def record_income(db: Session, income: schemas.IncomeCreate):
     return db_tx
 
 
+def delete_transaction(db: Session, transaction_id: int):
+    """
+    Elimina una transacción por su ID y revierte automáticamente los saldos en las cuentas correspondientes.
+    """
+    tx = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada")
+
+    # Revertir saldos según el tipo de transacción
+    if tx.transaction_type == "EXPENSE":
+        account = get_account_by_id(db, tx.account_id)
+        if account:
+            account.balance += tx.amount
+    elif tx.transaction_type == "TRANSFER":
+        source_account = get_account_by_id(db, tx.account_id)
+        dest_account = get_account_by_id(db, tx.destination_account_id)
+        if source_account:
+            source_account.balance += tx.amount
+        if dest_account:
+            dest_account.balance -= tx.amount
+    elif tx.transaction_type == "INCOME":
+        account = get_account_by_id(db, tx.account_id)
+        if account:
+            account.balance -= tx.amount
+
+    db.delete(tx)
+    db.commit()
+    return {"status": "ok", "message": f"Transacción #{transaction_id} eliminada y saldo revertido correctamente"}
+
+
 def get_recent_transactions(db: Session, limit: int = 20):
     txs = db.query(models.Transaction).order_by(models.Transaction.date.desc()).limit(limit).all()
     result = []
