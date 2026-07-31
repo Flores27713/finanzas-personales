@@ -89,7 +89,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold text-white tracking-tight">Finanzas Diarias</h1>
-                    <p class="text-xs text-slate-400">Control de presupuesto & gastos hormiga</p>
+                    <p class="text-xs text-slate-400">Control de presupuesto & ingresos DJ</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -216,13 +216,16 @@
             </div>
         </section>
 
-        <!-- Botones de Gestión (Nuevo Gasto & Transferencia) -->
-        <div class="flex gap-3">
-            <button onclick="openModal('expense-modal')" class="flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-teal-600/25 flex items-center justify-center gap-2 transition-all active:scale-95">
+        <!-- Botones de Gestión (Gasto, Ingreso DJ & Transferencia) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button onclick="openModal('expense-modal')" class="py-3 px-4 bg-rose-600/90 hover:bg-rose-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="fa-solid fa-minus-circle"></i> Registrar Gasto
             </button>
-            <button onclick="openModal('transfer-modal')" class="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm border border-slate-700 flex items-center justify-center gap-2 transition-all active:scale-95">
-                <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir entre Cuentas
+            <button onclick="openModal('income-modal')" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
+                <i class="fa-solid fa-compact-disc text-amber-300 text-base"></i> Ingreso Evento DJ
+            </button>
+            <button onclick="openModal('transfer-modal')" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm border border-slate-700 flex items-center justify-center gap-2 transition-all active:scale-95">
+                <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo
             </button>
         </div>
 
@@ -299,6 +302,50 @@
                     </button>
                     <button type="submit" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-teal-600/20">
                         Guardar Gasto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Ingreso (DJ / Eventos) -->
+    <div id="income-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-compact-disc text-emerald-400"></i> Registrar Ingreso (DJ / Evento)
+                </h3>
+                <button onclick="closeModal('income-modal')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="income-form" onsubmit="handleIncomeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto Ganado (CLP)</label>
+                    <input type="number" id="inc-amount" required min="1" step="any" placeholder="Ej: 50000"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">¿A qué cuenta fue ingresado?</label>
+                    <select id="inc-account" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        <!-- Llenado dinámico -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Detalle del Evento / Pago</label>
+                    <input type="text" id="inc-note" placeholder="Ej: Evento DJ Pub o Efectivo Matrimonio" required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('income-modal')" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-600/20">
+                        Guardar Ingreso
                     </button>
                 </div>
             </form>
@@ -528,7 +575,6 @@
             const dataValues = activeCategories.map(c => c.total_spent);
             const bgColors = activeCategories.map((_, i) => COLORS[i % COLORS.length]);
 
-            // Render Legend con porcentajes exactos como en la imagen
             legendContainer.innerHTML = activeCategories.map((c, i) => {
                 const pct = ((c.total_spent / totalSpentSum) * 100).toFixed(1);
                 const color = bgColors[i];
@@ -547,7 +593,6 @@
                 `;
             }).join('');
 
-            // Inicialización de Chart.js estilo dona
             const ctx = document.getElementById('expenseChart').getContext('2d');
             if (expenseChartInstance) {
                 expenseChartInstance.destroy();
@@ -708,7 +753,7 @@
                     amountText = `<span class="text-blue-400 font-bold">${formatCLP(tx.amount)}</span>`;
                     subtitle = `${tx.account_name} &rarr; ${tx.destination_account_name}`;
                 } else {
-                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Ingreso</span>`;
+                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Ingreso DJ</span>`;
                     amountText = `<span class="text-emerald-400 font-bold">+${formatCLP(tx.amount)}</span>`;
                     subtitle = `${tx.account_name}`;
                 }
@@ -765,14 +810,16 @@
             const expAccSelect = document.getElementById('exp-account');
             const transSourceSelect = document.getElementById('trans-source');
             const transDestSelect = document.getElementById('trans-dest');
+            const incAccSelect = document.getElementById('inc-account');
 
             const accOptions = cachedAccounts.map(acc => `<option value="${acc.id}">${acc.name} (${formatCLP(acc.balance)})</option>`).join('');
-            expAccSelect.innerHTML = accOptions;
-            transSourceSelect.innerHTML = accOptions;
-            transDestSelect.innerHTML = accOptions;
+            if (expAccSelect) expAccSelect.innerHTML = accOptions;
+            if (transSourceSelect) transSourceSelect.innerHTML = accOptions;
+            if (transDestSelect) transDestSelect.innerHTML = accOptions;
+            if (incAccSelect) incAccSelect.innerHTML = accOptions;
 
             const expCatSelect = document.getElementById('exp-category');
-            expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+            if (expCatSelect) expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
         }
 
         async function quickExpense(name, amount, accountName, categoryName) {
@@ -834,6 +881,35 @@
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al guardar gasto', 'error');
+                }
+            } catch (err) {
+                showToast('Error de servidor', 'error');
+            }
+        }
+
+        async function handleIncomeSubmit(event) {
+            event.preventDefault();
+            const amount = parseFloat(document.getElementById('inc-amount').value);
+            const account_id = parseInt(document.getElementById('inc-account').value);
+            const note = document.getElementById('inc-note').value.trim();
+
+            try {
+                const response = await fetch('/transactions/income', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ amount, account_id, note: note || 'Ingreso Evento DJ' })
+                });
+
+                if (response.ok) {
+                    showToast(`Ingreso registrado: +${formatCLP(amount)}`);
+                    closeModal('income-modal');
+                    document.getElementById('income-form').reset();
+                    refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Error al registrar ingreso', 'error');
                 }
             } catch (err) {
                 showToast('Error de servidor', 'error');

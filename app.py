@@ -85,6 +85,15 @@ def create_transfer(transfer: schemas.TransferCreate, db: Session = Depends(get_
     return crud.record_transfer(db, transfer)
 
 
+@app.post("/transactions/income", response_model=schemas.TransactionResponse, status_code=201, dependencies=[Depends(verify_pin)])
+def create_income(income: schemas.IncomeCreate, db: Session = Depends(get_db)):
+    """
+    Registrar un ingreso de dinero (ej. Pago Evento DJ en efectivo o transferencia).
+    """
+    return crud.record_income(db, income)
+
+
+
 @app.delete("/transactions/{transaction_id}", dependencies=[Depends(verify_pin)])
 def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
     """
