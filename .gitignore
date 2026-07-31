@@ -1,0 +1,15 @@
+# Entorno virtual y caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Base de datos SQLite local (para no sobreescribir datos en producción)
+*.db
+finance.db
+
+# Logs y configuración local
+*.log
+.env
