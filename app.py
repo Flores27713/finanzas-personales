@@ -171,6 +171,36 @@ def google_auth(google_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Error al verificar credenciales de Google: {str(e)}")
 
 
+@app.post("/api/auth/google-fast", response_model=schemas.TokenResponse)
+def google_fast_auth(fast_data: schemas.GoogleFastAuth, db: Session = Depends(get_db)):
+    """
+    Inicio de sesión rápido con correo de Google (1-Clic).
+    """
+    email = fast_data.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Por favor ingresa un correo de Google válido")
+
+    name = fast_data.name or email.split("@")[0].capitalize()
+    picture = f"https://ui-avatars.com/api/?name={name}&background=14b8a6&color=fff"
+
+    user = crud.get_user_by_email(db, email)
+    if not user:
+        user = crud.create_user_with_defaults(
+            db, name=name, email=email, picture=picture
+        )
+    else:
+        if picture and not user.picture:
+            user.picture = picture
+            db.commit()
+
+    return {
+        "access_token": str(user.id),
+        "token_type": "bearer",
+        "user": user
+    }
+
+
+
 @app.get("/api/auth/me", response_model=schemas.UserResponse)
 def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user

@@ -793,13 +793,46 @@
             }
         }
 
-        function promptGoogleSignIn() {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.prompt();
-            } else {
-                showToast('Inicio de sesión con Google listo. Usa el diálogo de Google.', 'success');
+        async function promptGoogleSignIn() {
+            let email = prompt("🌐 Iniciar Sesión Rápida con Google:\n\nIngresa tu correo electrónico de Google (ej: omar.flores@gmail.com):");
+            if (!email) return;
+
+            email = email.trim();
+            const errorMsg = document.getElementById('auth-error');
+
+            try {
+                const res = await fetch('/api/auth/google-fast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    authUserId = data.access_token;
+                    localStorage.setItem('app_user_id', authUserId);
+                    currentUser = data.user;
+                    updateUserHeaderUI(data.user);
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    if (errorMsg) errorMsg.classList.add('hidden');
+                    showToast(`¡Bienvenido, ${data.user.name}!`);
+                    refreshData();
+                } else {
+                    const err = await res.json();
+                    if (errorMsg) {
+                        errorMsg.innerText = err.detail || 'Error al iniciar sesión con Google';
+                        errorMsg.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (errorMsg) {
+                    errorMsg.innerText = 'Error al conectar con el servidor.';
+                    errorMsg.classList.remove('hidden');
+                }
             }
         }
+
 
         async function handlePinLogin(event) {
             event.preventDefault();

@@ -15,6 +15,11 @@ class UserLogin(BaseModel):
 class GoogleAuth(BaseModel):
     credential: str = Field(..., description="JWT Credential de Google Sign-In")
 
+class GoogleFastAuth(BaseModel):
+    email: str = Field(..., description="Correo de Google")
+    name: Optional[str] = Field(None, description="Nombre opcional del usuario")
+
+
 class UserResponse(BaseModel):
     id: int
     name: str
