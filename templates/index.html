@@ -854,24 +854,34 @@
                 if (response.ok) {
                     const data = await response.json();
                     currentPIN = pinInput;
-                    authUserId = str(data.user_id || '');
+                    authUserId = String(data.user_id || '1');
                     localStorage.setItem('app_pin', currentPIN);
                     localStorage.setItem('app_user_id', authUserId);
                     document.getElementById('auth-lockscreen').classList.add('hidden');
                     document.getElementById('app-content').classList.remove('hidden');
-                    errorMsg.classList.add('hidden');
+                    if (errorMsg) errorMsg.classList.add('hidden');
                     document.getElementById('header-user-name').innerText = data.name || 'Omar';
+
+                    fetch('/api/auth/me', { headers: getAuthHeaders() })
+                        .then(r => r.ok ? r.json() : null)
+                        .then(u => { if (u) updateUserHeaderUI(u); });
+
                     refreshData();
                 } else {
-                    errorMsg.innerText = 'PIN de acceso incorrecto.';
-                    errorMsg.classList.remove('hidden');
+                    if (errorMsg) {
+                        errorMsg.innerText = 'PIN de acceso incorrecto.';
+                        errorMsg.classList.remove('hidden');
+                    }
                     document.getElementById('input-pin').value = '';
                 }
             } catch (err) {
-                errorMsg.innerText = 'Error de conexión con el servidor.';
-                errorMsg.classList.remove('hidden');
+                if (errorMsg) {
+                    errorMsg.innerText = 'Error al procesar el inicio de sesión por PIN.';
+                    errorMsg.classList.remove('hidden');
+                }
             }
         }
+
 
         function updateUserHeaderUI(user) {
             if (!user) return;
