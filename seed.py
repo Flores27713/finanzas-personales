@@ -9,6 +9,8 @@ INITIAL_ACCOUNTS = [
 ]
 
 INITIAL_CATEGORIES = [
+    {"name": "Arriendo / Gastos Comunes (Fijo)", "monthly_budget": 170000.0},
+    {"name": "Cuentas Básicas (Luz / Agua / Internet)", "monthly_budget": 40000.0},
     {"name": "Transporte Talca (Colectivo / Uber Trabajo)", "monthly_budget": 35000.0},
     {"name": "Transporte Interurbano (Bus Talca-Linares)", "monthly_budget": 40000.0},
     {"name": "Transporte Local Linares (Uber / Colectivos)", "monthly_budget": 20000.0},
@@ -21,7 +23,7 @@ INITIAL_CATEGORIES = [
 def seed_database(db: Session):
     """
     Precarga las cuentas y categorías iniciales si no existen en la base de datos.
-    Asegura la creación automática de la cuenta 'Efectivo (Billetera)'.
+    Ajusta el arriendo a $170.000 CLP exactos.
     """
     for acc in INITIAL_ACCOUNTS:
         existing = db.query(models.Account).filter(models.Account.name == acc["name"]).first()
@@ -36,5 +38,8 @@ def seed_database(db: Session):
             cat_obj = models.Category(name=cat["name"], monthly_budget=cat["monthly_budget"])
             db.add(cat_obj)
             print(f"[SEED] Categoría creada: {cat['name']}")
+        else:
+            if existing.name == "Arriendo / Gastos Comunes (Fijo)":
+                existing.monthly_budget = 170000.0
 
     db.commit()
