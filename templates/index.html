@@ -101,28 +101,39 @@
                     <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
                     <span class="hidden sm:inline">Actualizar</span>
                 </button>
+                <button onclick="handleResetDatabase()" title="Reiniciar datos a cero" class="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition-colors text-sm flex items-center gap-1.5 font-semibold">
+                    <i class="fa-solid fa-trash-can text-rose-400"></i>
+                    <span class="hidden md:inline">Reiniciar a Cero</span>
+                </button>
                 <button onclick="logoutPIN()" title="Bloquear App" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors text-sm">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
+
             </div>
         </header>
 
         <!-- Consolidado Top Banner -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             
-            <!-- Saldo Consolidado -->
-            <div class="glass-card rounded-2xl p-5 md:col-span-2 relative overflow-hidden">
+            <!-- Saldo Consolidado & Protección de Arriendo -->
+            <div class="glass-card rounded-2xl p-5 md:col-span-2 relative overflow-hidden flex flex-col justify-between">
                 <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo Total Consolidado</span>
-                <div class="text-3xl font-extrabold text-white mt-1 tracking-tight" id="total-balance">
-                    $0 CLP
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo Total Consolidado</span>
+                    <div class="text-3xl font-extrabold text-white mt-1 tracking-tight" id="total-balance">
+                        $0 CLP
+                    </div>
                 </div>
-                <div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
-                    <span class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700/50 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 3 Cuentas Activas
+                
+                <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap gap-2 text-xs">
+                    <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-rose-300 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-house-lock text-rose-400"></i> Reserva Arriendo/Fijos: <strong id="committed-expenses">$0</strong>
                     </span>
-                    <span class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700/50 flex items-center gap-1.5">
-                        <i class="fa-regular fa-calendar text-teal-400"></i> <span id="days-remaining">-- días restantes del mes</span>
+                    <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-check text-emerald-400"></i> Libre Real: <strong id="free-balance">$0</strong>
+                    </span>
+                    <span class="px-2.5 py-1.5 rounded-xl bg-slate-900 text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar text-teal-400"></i> <span id="days-remaining">-- días</span>
                     </span>
                 </div>
             </div>
@@ -139,10 +150,11 @@
                     </div>
                 </div>
                 <p class="text-[11px] text-slate-400 mt-3 leading-snug">
-                    Calculado con saldo disponible en CuentaRUT + MP Disponible entre los días restantes del mes.
+                    🛡️ Calculado protegiendo la reserva del arriendo entre los días restantes del mes.
                 </p>
             </div>
         </div>
+
 
         <!-- Alerta de Supervivencia Financiera (Humor Negro) -->
         <div id="funny-alert-box" class="glass-card rounded-2xl p-4 border-l-4 border-emerald-500 flex items-center gap-3 transition-all duration-300 shadow-lg">
@@ -724,10 +736,13 @@
                 if (res.status === 401) { logoutPIN(); return; }
                 const data = await res.json();
 
-                // Formatear Saldo Total
+                // Formatear Saldo Total y Reservas
                 document.getElementById('total-balance').innerText = formatCLP(data.total_balance);
                 document.getElementById('daily-hormiga-limit').innerText = `${formatCLP(data.daily_hormiga_limit)} / día`;
-                document.getElementById('days-remaining').innerText = `${data.days_remaining_in_month} días restantes del mes`;
+                document.getElementById('days-remaining').innerText = `${data.days_remaining_in_month} días restantes`;
+                document.getElementById('committed-expenses').innerText = formatCLP(data.committed_expenses || 0);
+                document.getElementById('free-balance').innerText = formatCLP(data.free_balance || 0);
+
 
                 // Render Cuentas
                 cachedAccounts = data.accounts;
@@ -1098,7 +1113,33 @@
             }
         }
 
+        async function handleResetDatabase() {
+            if (!confirm('⚠️ ¿Estás seguro de reiniciar todas las transacciones y volver los saldos a cero para empezar el nuevo mes?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/reset-database', {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    showToast('Base de datos reiniciada con éxito. Listo para empezar de cero.');
+                    refreshData();
+                } else if (response.status === 401) {
+                    logoutPIN();
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Error al reiniciar base de datos', 'error');
+                }
+            } catch (err) {
+                showToast('Error de servidor', 'error');
+            }
+        }
+
         function openModal(id) {
+
             document.getElementById(id).classList.remove('hidden');
         }
 

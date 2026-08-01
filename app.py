@@ -153,6 +153,15 @@ def get_monthly_report(
     return crud.get_monthly_report(db, year, month)
 
 
+@app.post("/api/reset-database", dependencies=[Depends(verify_pin)])
+def reset_database(db: Session = Depends(get_db)):
+    """
+    Reiniciar todas las transacciones y restaurar saldos y categorías a cero / valores iniciales.
+    """
+    return crud.reset_database(db)
+
+
+
 
 # Servidor directo si se ejecuta 'python app.py'
 if __name__ == "__main__":

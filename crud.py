@@ -138,6 +138,19 @@ def delete_transaction(db: Session, transaction_id: int):
     return {"status": "ok", "message": f"Transacción #{transaction_id} eliminada y saldo revertido correctamente"}
 
 
+def reset_database(db: Session):
+    """
+    Borra todas las transacciones, cuentas y categorías, y vuelve a sembrar los datos iniciales limpios.
+    """
+    from seed import seed_database
+    db.query(models.Transaction).delete()
+    db.query(models.Account).delete()
+    db.query(models.Category).delete()
+    db.commit()
+    seed_database(db)
+    return {"status": "ok", "message": "Base de datos reiniciada con éxito. Listo para empezar de cero."}
+
+
 def get_recent_transactions(db: Session, limit: int = 20):
     txs = db.query(models.Transaction).order_by(models.Transaction.date.desc()).limit(limit).all()
     result = []
@@ -201,20 +214,30 @@ def get_dashboard_summary(db: Session):
             "percentage_used": round(percentage, 1)
         })
 
-    # 3. Límite diario disponible para gastos hormiga
-    # Se consideran las cuentas operativas y líquidas: CuentaRUT, Mercado Pago Disponible y Efectivo (Billetera)
+    # 3. Límite diario disponible para gastos hormiga (Blindaje de Arriendo y Cuentas Fijas)
     liquid_accounts = [acc for acc in accounts if acc.name in ["CuentaRUT", "Mercado Pago Disponible", "Efectivo (Billetera)"]]
     liquid_balance = sum(max(0.0, acc.balance) for acc in liquid_accounts)
 
+    # Calcular monto comprometido pendiente para Arriendo y Gastos Fijos en el mes
+    committed_expenses = 0.0
+    for cat_item in categories_summary:
+        name_lower = cat_item["category_name"].lower()
+        if "arriendo" in name_lower or "cuentas básicas" in name_lower or "fijo" in name_lower:
+            pending = max(0.0, cat_item["monthly_budget"] - cat_item["total_spent"])
+            committed_expenses += pending
 
-    daily_hormiga_limit = round(liquid_balance / days_remaining, 0)
+    # Saldo Libre Real disponible descontando la reserva de arriendo
+    free_balance = max(0.0, liquid_balance - committed_expenses)
+    daily_hormiga_limit = round(free_balance / days_remaining, 0)
 
     return {
         "total_balance": total_balance,
         "accounts": accounts,
         "categories_summary": categories_summary,
         "daily_hormiga_limit": daily_hormiga_limit,
-        "days_remaining_in_month": days_remaining
+        "days_remaining_in_month": days_remaining,
+        "committed_expenses": committed_expenses,
+        "free_balance": free_balance
     }
 
 
