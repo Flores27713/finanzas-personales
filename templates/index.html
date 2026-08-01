@@ -42,32 +42,33 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #F8FAFC;
-            background-image: radial-gradient(at 50% 0%, rgba(23, 104, 120, 0.05) 0px, transparent 75%),
-                              radial-gradient(at 100% 100%, rgba(227, 176, 139, 0.05) 0px, transparent 75%);
+            background-color: #F0F2F5;
+            background-image: radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.06) 0px, transparent 75%),
+                              radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.04) 0px, transparent 75%);
             background-attachment: fixed;
-            color: #0F172A;
+            color: #1E293B;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: #FFFFFF;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid #E2E8F0;
-            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 6px 16px -4px rgba(15, 23, 42, 0.04);
+            border-radius: 1rem;
         }
         .glass-card-hover {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-card-hover:hover {
-            border-color: #176878;
+            border-color: #6366F1;
             transform: translateY(-2px);
-            box-shadow: 0 20px 40px -12px rgba(23, 104, 120, 0.12);
+            box-shadow: 0 12px 28px -6px rgba(99, 102, 241, 0.12);
         }
         .glass-modal {
             background: #FFFFFF;
             backdrop-filter: blur(24px);
-            border: 1px solid #CBD5E1;
-            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12);
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -76,10 +77,11 @@
             background: #F1F5F9;
         }
         ::-webkit-scrollbar-thumb {
-            background: #176878;
+            background: #6366F1;
             border-radius: 9999px;
         }
     </style>
+
 </head>
 <body class="text-palette-dark min-h-screen pb-12">
 
@@ -198,106 +200,110 @@
     <div id="app-content" class="max-w-4xl mx-auto px-4 pt-6 space-y-6 hidden">
         
         <!-- Header -->
-        <header class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
+        <header class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-4 gap-3">
             <div class="flex items-center gap-3">
-                <div id="user-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-teal-500/20 overflow-hidden">
-                    <i class="fa-solid fa-user text-slate-950 text-lg"></i>
+                <div id="user-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 overflow-hidden">
+                    <i class="fa-solid fa-user text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <h1 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
                         <span id="header-user-name">Finanzas Personales</span>
                     </h1>
-                    <p class="text-xs text-slate-400">Control de presupuesto & reportes mensuales</p>
+                    <p class="text-xs text-slate-500">Control de presupuesto & reportes mensuales</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="admin-panel-btn" onclick="openAdminModal()" class="hidden p-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors text-sm flex items-center gap-1.5 font-semibold">
-                    <i class="fa-solid fa-crown text-amber-400"></i>
+                <button id="admin-panel-btn" onclick="openAdminModal()" class="hidden p-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition-colors text-sm flex items-center gap-1.5 font-semibold">
+                    <i class="fa-solid fa-crown text-amber-500"></i>
                     <span class="hidden sm:inline">Administración</span>
                 </button>
-                <button onclick="openModal('report-modal'); fetchMonthlyReport();" class="p-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 transition-colors text-sm flex items-center gap-1.5 font-semibold">
+                <button onclick="openModal('report-modal'); fetchMonthlyReport();" class="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 transition-colors text-sm flex items-center gap-1.5 font-semibold">
                     <i class="fa-solid fa-chart-line"></i>
                     <span class="hidden sm:inline">Reporte Mensual</span>
                 </button>
-                <button onclick="refreshData()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors text-sm flex items-center gap-2">
+                <button onclick="refreshData()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors text-sm flex items-center gap-2">
                     <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
                     <span class="hidden sm:inline">Actualizar</span>
                 </button>
-                <button onclick="handleResetDatabase()" title="Reiniciar datos a cero" class="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition-colors text-sm flex items-center gap-1.5 font-semibold">
-                    <i class="fa-solid fa-trash-can text-rose-400"></i>
+                <button onclick="handleResetDatabase()" title="Reiniciar datos a cero" class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition-colors text-sm flex items-center gap-1.5 font-semibold">
+                    <i class="fa-solid fa-trash-can text-rose-500"></i>
                     <span class="hidden md:inline">Reiniciar</span>
                 </button>
-                <button onclick="logoutAuth()" title="Cerrar Sesión" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors text-sm">
+                <button onclick="logoutAuth()" title="Cerrar Sesión" class="p-2 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-500 transition-colors text-sm">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </header>
 
 
+
         <!-- Consolidado Top Banner -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <!-- Saldo Consolidado & Protección de Arriendo -->
-            <div class="glass-card rounded-2xl p-5 md:col-span-2 relative overflow-hidden flex flex-col justify-between">
-                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="glass-card rounded-2xl p-5 md:col-span-2 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-indigo-600 to-blue-600 border-none text-white">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
                 <div>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo Total Consolidado</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-200">Saldo Total Consolidado</span>
                     <div class="text-3xl font-extrabold text-white mt-1 tracking-tight" id="total-balance">
                         $0 CLP
                     </div>
                 </div>
                 
-                <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap gap-2 text-xs">
-                    <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-rose-300 font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-house-lock text-rose-400"></i> Reserva Arriendo/Fijos: <strong id="committed-expenses">$0</strong>
+                <div class="mt-4 pt-3 border-t border-white/20 flex flex-wrap gap-2 text-xs">
+                    <span class="px-3 py-1.5 rounded-xl bg-white/15 text-rose-200 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-house-lock text-rose-200"></i> Reserva Arriendo/Fijos: <strong id="committed-expenses">$0</strong>
                     </span>
-                    <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-shield-check text-emerald-400"></i> Libre Real: <strong id="free-balance">$0</strong>
+                    <span class="px-3 py-1.5 rounded-xl bg-white/15 text-emerald-200 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-check text-emerald-200"></i> Libre Real: <strong id="free-balance">$0</strong>
                     </span>
-                    <span class="px-2.5 py-1.5 rounded-xl bg-slate-900 text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-regular fa-calendar text-teal-400"></i> <span id="days-remaining">-- días</span>
+                    <span class="px-2.5 py-1.5 rounded-xl bg-white/10 text-indigo-200 flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar text-indigo-200"></i> <span id="days-remaining">-- días</span>
                     </span>
                 </div>
             </div>
 
             <!-- Límite Diario Gastos Hormiga -->
-            <div class="glass-card rounded-2xl p-5 border-l-4 border-amber-500 relative overflow-hidden flex flex-col justify-between">
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-amber-400 relative overflow-hidden flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                    <div class="flex items-center justify-between text-xs font-semibold text-amber-600 uppercase tracking-wider">
                         <span>Límite Hormiga Diario</span>
-                        <i class="fa-solid fa-cookie-bite text-amber-400"></i>
+                        <i class="fa-solid fa-cookie-bite text-amber-500"></i>
                     </div>
-                    <div class="text-2xl font-bold text-amber-300 mt-2" id="daily-hormiga-limit">
+                    <div class="text-2xl font-bold text-amber-600 mt-2" id="daily-hormiga-limit">
                         $0 / día
                     </div>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-3 leading-snug">
+                <p class="text-[11px] text-slate-500 mt-3 leading-snug">
                     🛡️ Calculado protegiendo la reserva del arriendo entre los días restantes del mes.
                 </p>
             </div>
         </div>
 
+
         <!-- Alerta de Supervivencia Financiera (Humor Negro) -->
-        <div id="funny-alert-box" class="glass-card rounded-2xl p-4 border-l-4 border-emerald-500 flex items-center gap-3 transition-all duration-300 shadow-lg">
-            <div id="funny-alert-icon" class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl shrink-0">
+        <div id="funny-alert-box" class="glass-card rounded-2xl p-4 border-l-4 border-emerald-500 flex items-center gap-3 transition-all duration-300">
+            <div id="funny-alert-icon" class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
                 <i class="fa-solid fa-face-smile"></i>
             </div>
             <div>
-                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400" id="funny-alert-title">Alerta de Supervivencia Financiera</div>
-                <div class="text-xs sm:text-sm font-semibold text-white mt-0.5 leading-snug" id="funny-alert-msg">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500" id="funny-alert-title">Alerta de Supervivencia Financiera</div>
+                <div class="text-xs sm:text-sm font-semibold text-slate-700 mt-0.5 leading-snug" id="funny-alert-msg">
                     Analizando tu comportamiento financiero...
                 </div>
             </div>
         </div>
 
+
         <!-- Gráfico de Dona de Gastos (Estilo Referencia) -->
         <section class="glass-card rounded-2xl p-5 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie text-teal-400"></i> Distribución de Gastos
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-indigo-500"></i> Distribución de Gastos
                 </h2>
-                <span class="text-xs font-semibold text-teal-400" id="chart-total-spent">Total: $0 CLP</span>
+                <span class="text-xs font-semibold text-indigo-600" id="chart-total-spent">Total: $0 CLP</span>
             </div>
+
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center py-2">
                 <!-- Canvas Dona estilo imagen de referencia -->
@@ -305,8 +311,8 @@
                     <canvas id="expenseChart"></canvas>
                     <!-- Centro del Donut -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <div class="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center shadow-inner">
-                            <span class="w-3.5 h-3.5 rounded-full bg-white shadow-md animate-pulse"></span>
+                        <div class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                            <span class="w-3.5 h-3.5 rounded-full bg-indigo-500 shadow-md animate-pulse"></span>
                         </div>
                     </div>
                 </div>
@@ -321,10 +327,10 @@
         <!-- Acciones Rápidas (1-Clic Dinámicas por Usuario) -->
         <section class="space-y-3">
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-amber-400"></i> Acciones Rápidas (1-Clic)
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-500"></i> Acciones Rápidas (1-Clic)
                 </h2>
-                <button onclick="openQuickButtonsModal()" class="text-xs text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20">
+                <button onclick="openQuickButtonsModal()" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-200 hover:bg-indigo-100 transition-all">
                     <i class="fa-solid fa-pen-to-square"></i> Personalizar Atajos
                 </button>
             </div>
@@ -336,14 +342,14 @@
 
         <!-- Botones de Gestión (Gasto, Ingreso & Transferencia) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button onclick="openModal('expense-modal')" class="py-3 px-4 bg-rose-600/90 hover:bg-rose-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
+            <button onclick="openModal('expense-modal')" class="py-3 px-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="fa-solid fa-minus-circle"></i> Registrar Gasto
             </button>
-            <button onclick="openModal('income-modal')" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
+            <button onclick="openModal('income-modal')" class="py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="fa-solid fa-plus-circle text-white text-base"></i> Registrar Ingreso / Sueldo
             </button>
-            <button onclick="openModal('transfer-modal')" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm border border-slate-700 flex items-center justify-center gap-2 transition-all active:scale-95">
-                <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo
+            <button onclick="openModal('transfer-modal')" class="py-3 px-4 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-95">
+                <i class="fa-solid fa-arrow-right-arrow-left text-white"></i> Transferir Saldo
             </button>
         </div>
 
@@ -351,10 +357,10 @@
         <!-- Tarjetas de Cuentas (Bancos de Chile & Billeteras) -->
         <section class="space-y-3">
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                    <i class="fa-solid fa-building-columns text-cyan-400"></i> Cuentas, Bancos & Tarjetas
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-blue-500"></i> Cuentas, Bancos & Tarjetas
                 </h2>
-                <button onclick="openAddAccountModal()" class="text-xs text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1.5 bg-cyan-500/20 px-3 py-1.5 rounded-xl border border-cyan-500/30 transition-all shadow-lg shadow-cyan-500/10">
+                <button onclick="openAddAccountModal()" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200 hover:bg-blue-100 transition-all">
                     <i class="fa-solid fa-plus-circle"></i> Agregar Mi Banco
                 </button>
             </div>
@@ -366,7 +372,7 @@
 
         <!-- Presupuestos por Categoría -->
         <section class="space-y-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Presupuestos del Mes</h2>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Presupuestos del Mes</h2>
             <div class="glass-card rounded-2xl p-5 space-y-4" id="categories-list">
                 <!-- Se llena dinámicamente -->
             </div>
@@ -374,9 +380,9 @@
 
         <!-- Historial de Transacciones -->
         <section class="space-y-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Últimas Transacciones</h2>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Últimas Transacciones</h2>
             <div class="glass-card rounded-2xl p-4 overflow-hidden">
-                <div class="divide-y divide-slate-800/80" id="transactions-list">
+                <div class="divide-y divide-slate-200" id="transactions-list">
                     <!-- Se llena dinámicamente -->
                 </div>
             </div>
@@ -385,49 +391,49 @@
     </div>
 
     <!-- Modal Registrar Gasto -->
-    <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-receipt text-teal-400"></i> Registrar Nuevo Gasto
+    <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-4 relative shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-receipt text-rose-500"></i> Registrar Nuevo Gasto
                 </h3>
-                <button onclick="closeModal('expense-modal')" class="text-slate-400 hover:text-white">
+                <button onclick="closeModal('expense-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
             <form id="expense-form" onsubmit="handleExpenseSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto del Gasto (CLP)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Monto del Gasto (CLP)</label>
                     <input type="number" id="exp-amount" required min="1" step="any" placeholder="Ej: 3500"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta de Origen (¿De dónde sale el dinero?)</label>
-                    <select id="exp-account" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">🏦 Banco / Cuenta de Origen (¿De dónde sale el dinero?)</label>
+                    <select id="exp-account" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏷️ Destinación / ¿En qué se utilizó el dinero?</label>
-                    <select id="exp-category" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">🏷️ Destinación / ¿En qué se utilizó el dinero?</label>
+                    <select id="exp-category" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">📝 Detalle o Glosa del Gasto</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">📝 Detalle o Glosa del Gasto</label>
                     <input type="text" id="exp-note" placeholder="Ej: Supermercado Lider, Pasaje de bus, Farmacia"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-sm">
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeModal('expense-modal')" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm">
+                    <button type="button" onclick="closeModal('expense-modal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-sm">
                         Cancelar
                     </button>
-                    <button type="submit" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-teal-600/20">
+                    <button type="submit" class="flex-1 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-500/20">
                         Guardar Gasto
                     </button>
                 </div>
@@ -435,55 +441,56 @@
         </div>
     </div>
 
+
     <!-- Modal Registrar Ingreso / Sueldo / Venta -->
-    <div id="income-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i> Registrar Ingreso / Sueldo
+    <div id="income-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-4 relative shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-trend-up text-emerald-500"></i> Registrar Ingreso / Sueldo
                 </h3>
-                <button onclick="closeModal('income-modal')" class="text-slate-400 hover:text-white">
+                <button onclick="closeModal('income-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
             <form id="income-form" onsubmit="handleIncomeSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Atajo Rápido de Ingreso</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Atajo Rápido de Ingreso</label>
                     <div class="flex gap-2">
-                        <button type="button" onclick="presetIncome(currentUser?.monthly_income || 500000, 'Sueldo Líquido Mensual')" class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-emerald-400 rounded-xl border border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all">
+                        <button type="button" onclick="presetIncome(currentUser?.monthly_income || 500000, 'Sueldo Líquido Mensual')" class="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-700 rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition-all">
                             <i class="fa-solid fa-briefcase"></i> Mi Sueldo
                         </button>
-                        <button type="button" onclick="presetIncome('', 'Ingreso Extra')" class="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 transition-all">
+                        <button type="button" onclick="presetIncome('', 'Ingreso Extra')" class="py-2 px-3 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-600 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition-all">
                             <i class="fa-solid fa-plus-circle"></i> Ingreso Extra / Venta
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto del Ingreso (CLP)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Monto del Ingreso (CLP)</label>
                     <input type="number" id="inc-amount" required min="1" step="any" placeholder="Ej: 500000"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta Destino (¿A qué cuenta ingresó el dinero?)</label>
-                    <select id="inc-account" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">🏦 Banco / Cuenta Destino (¿A qué cuenta ingresó el dinero?)</label>
+                    <select id="inc-account" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-emerald-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">📝 Detalle o Fuente del Ingreso</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">📝 Detalle o Fuente del Ingreso</label>
                     <input type="text" id="inc-note" placeholder="Ej: Sueldo del mes, Venta realizada, Freelance" required
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm">
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeModal('income-modal')" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm">
+                    <button type="button" onclick="closeModal('income-modal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-sm">
                         Cancelar
                     </button>
-                    <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-600/20">
+                    <button type="submit" class="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-500/20">
                         Guardar Ingreso
                     </button>
                 </div>
@@ -491,51 +498,52 @@
         </div>
     </div>
 
+
     <!-- Modal Transferir entre Cuentas -->
-    <div id="transfer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo Entre Cuentas
+    <div id="transfer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-200 p-6 space-y-4 relative shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-right-arrow-left text-indigo-500"></i> Transferir Saldo Entre Cuentas
                 </h3>
-                <button onclick="closeModal('transfer-modal')" class="text-slate-400 hover:text-white">
+                <button onclick="closeModal('transfer-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
             <form id="transfer-form" onsubmit="handleTransferSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto a Transferir (CLP)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Monto a Transferir (CLP)</label>
                     <input type="number" id="trans-amount" required min="1" step="any" placeholder="Ej: 15000"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta Origen (¿Desde qué cuenta se saca el dinero?)</label>
-                    <select id="trans-source" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">🏦 Banco / Cuenta Origen (¿Desde qué cuenta se saca el dinero?)</label>
+                    <select id="trans-source" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">🎯 Banco / Cuenta Destino (¿A qué cuenta se envía el dinero?)</label>
-                    <select id="trans-dest" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">🎯 Banco / Cuenta Destino (¿A qué cuenta se envía el dinero?)</label>
+                    <select id="trans-dest" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nota (Opcional)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nota (Opcional)</label>
                     <input type="text" id="trans-note" placeholder="Ej: Traspaso a saldo operativo"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-sm">
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closeModal('transfer-modal')" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm">
+                    <button type="button" onclick="closeModal('transfer-modal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-sm">
                         Cancelar
                     </button>
-                    <button type="submit" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-teal-600/20">
+                    <button type="submit" class="flex-1 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-500/20">
                         Realizar Traspaso
                     </button>
                 </div>
@@ -543,29 +551,30 @@
         </div>
     </div>
 
+
     <!-- Modal Reporte Mensual & Recomendaciones de Ahorro -->
-    <div id="report-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-700 p-6 space-y-6 relative shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div id="report-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 p-6 space-y-6 relative shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg text-white">Reporte de Cierre Mensual</h3>
-                        <p class="text-xs text-slate-400">Resumen de ingresos, gastos y consejos para gastar menos</p>
+                        <h3 class="font-bold text-lg text-slate-800">Reporte de Cierre Mensual</h3>
+                        <p class="text-xs text-slate-500">Resumen de ingresos, gastos y consejos para gastar menos</p>
                     </div>
                 </div>
-                <button onclick="closeModal('report-modal')" class="text-slate-400 hover:text-white">
+                <button onclick="closeModal('report-modal')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
 
             <!-- Filtro de Mes y Año -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
-                <span class="text-xs font-semibold text-slate-300" id="report-month-title">Cargando reporte...</span>
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <span class="text-xs font-semibold text-slate-600" id="report-month-title">Cargando reporte...</span>
                 <div class="flex gap-2">
-                    <select id="report-month" onchange="fetchMonthlyReport()" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                    <select id="report-month" onchange="fetchMonthlyReport()" class="bg-white border border-slate-200 text-xs text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500">
                         <option value="1">Enero</option>
                         <option value="2">Febrero</option>
                         <option value="3">Marzo</option>
@@ -579,7 +588,7 @@
                         <option value="11">Noviembre</option>
                         <option value="12">Diciembre</option>
                     </select>
-                    <select id="report-year" onchange="fetchMonthlyReport()" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                    <select id="report-year" onchange="fetchMonthlyReport()" class="bg-white border border-slate-200 text-xs text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500">
                         <option value="2025">2025</option>
                         <option value="2026" selected>2026</option>
                         <option value="2027">2027</option>
@@ -590,35 +599,36 @@
             <!-- Resumen numérico -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="glass-card p-4 rounded-2xl border-l-4 border-emerald-500">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Ingresos</span>
-                    <div class="text-lg font-bold text-emerald-400 mt-1" id="report-income">$0 CLP</div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Ingresos</span>
+                    <div class="text-lg font-bold text-emerald-600 mt-1" id="report-income">$0 CLP</div>
                 </div>
                 <div class="glass-card p-4 rounded-2xl border-l-4 border-rose-500">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Gastos</span>
-                    <div class="text-lg font-bold text-rose-400 mt-1" id="report-expense">$0 CLP</div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Gastos</span>
+                    <div class="text-lg font-bold text-rose-600 mt-1" id="report-expense">$0 CLP</div>
                 </div>
                 <div class="glass-card p-4 rounded-2xl border-l-4 border-indigo-500">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Balance Ahorro Neto</span>
-                    <div class="text-lg font-bold text-indigo-300 mt-1" id="report-net">$0 CLP</div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance Ahorro Neto</span>
+                    <div class="text-lg font-bold text-indigo-600 mt-1" id="report-net">$0 CLP</div>
                 </div>
             </div>
 
             <!-- Caja de Recomendaciones Inteligentes de Ahorro -->
-            <div class="glass-card p-4 rounded-2xl border border-indigo-500/30 bg-indigo-950/20 space-y-2">
-                <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Recomendaciones para Gastar Menos
+            <div class="glass-card p-4 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-2">
+                <h4 class="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-500"></i> Recomendaciones para Gastar Menos
                 </h4>
-                <div class="space-y-2 text-xs text-slate-200" id="report-recommendations">
+                <div class="space-y-2 text-xs text-slate-700" id="report-recommendations">
                     <!-- Se llena dinámicamente -->
                 </div>
             </div>
 
             <!-- Desglose por Categoría en el Mes -->
             <div class="space-y-2">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Desglose de Gastos del Mes</h4>
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Desglose de Gastos del Mes</h4>
                 <div class="space-y-2 max-h-48 overflow-y-auto pr-1" id="report-categories">
                     <!-- Se llena dinámicamente -->
                 </div>
+
             </div>
         </div>
     </div>
@@ -1191,13 +1201,13 @@
 
             if (!accounts || accounts.length === 0) {
                 list.innerHTML = `
-                    <div class="col-span-full p-6 rounded-3xl bg-white border border-palette-petrol/30 border-dashed text-center space-y-3 shadow-sm">
-                        <div class="w-12 h-12 rounded-2xl bg-palette-petrol/10 border border-palette-petrol/30 flex items-center justify-center mx-auto text-palette-petrol text-xl shadow-sm">
+                    <div class="col-span-full p-6 rounded-3xl bg-white border-2 border-dashed border-blue-200 text-center space-y-3 shadow-sm">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 text-xl">
                             <i class="fa-solid fa-building-columns"></i>
                         </div>
-                        <h3 class="text-sm font-bold text-palette-dark">¡No tienes bancos ni tarjetas registradas aún!</h3>
-                        <p class="text-xs text-palette-gray max-w-sm mx-auto">Selecciona tu primer banco de Chile (BancoEstado CuentaRUT, Santander, BCI, Banco Falabella o Mercado Pago) para comenzar.</p>
-                        <button onclick="openAddAccountModal()" class="px-5 py-2.5 rounded-xl bg-palette-petrol text-white font-extrabold text-xs shadow-lg shadow-palette-petrol/20 hover:opacity-90 transition-all active:scale-95">
+                        <h3 class="text-sm font-bold text-slate-800">¡No tienes bancos ni tarjetas registradas aún!</h3>
+                        <p class="text-xs text-slate-500 max-w-sm mx-auto">Selecciona tu primer banco de Chile (BancoEstado CuentaRUT, Santander, BCI, Banco Falabella o Mercado Pago) para comenzar.</p>
+                        <button onclick="openAddAccountModal()" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/20 hover:from-indigo-600 hover:to-blue-600 transition-all active:scale-95">
                             <i class="fa-solid fa-plus-circle mr-1"></i> Agregar Mi Primer Banco
                         </button>
                     </div>
@@ -1206,57 +1216,53 @@
             }
 
             list.innerHTML = accounts.map(acc => {
-                let badgeColor = 'from-white to-slate-50 text-palette-dark border-slate-200';
-                let icon = 'fa-building-columns text-palette-petrol';
-                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-palette-petrol/10 text-palette-petrol border border-palette-petrol/20 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
+                let borderColor = 'border-l-indigo-400';
+                let icon = 'fa-building-columns text-indigo-500';
+                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
 
                 const accName = acc.name || '';
                 const bankName = acc.bank_name || '';
 
                 if (accName.includes('CuentaRUT') || bankName.includes('BancoEstado')) {
-                    badgeColor = 'from-slate-900 via-slate-800 to-slate-950 text-white border-palette-sand/40';
-                    icon = 'fa-credit-card text-palette-sand';
+                    borderColor = 'border-l-amber-400';
+                    icon = 'fa-credit-card text-amber-600';
                     if (accName.includes('CuentaRUT')) {
-                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-palette-sand/20 text-palette-sand border border-palette-sand/40 text-[10px] font-bold">CuentaRUT</span>`;
+                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">CuentaRUT</span>`;
                     }
                 } else if (acc.account_type?.includes('Crédito') || accName.includes('Crédito') || accName.includes('CMR')) {
-                    badgeColor = 'from-purple-950 via-slate-900 to-indigo-950 text-white border-purple-400/40 shadow-md';
-                    icon = 'fa-credit-card text-purple-300 animate-pulse';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-purple-400/20 text-purple-200 border border-purple-400/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
+                    borderColor = 'border-l-purple-400';
+                    icon = 'fa-credit-card text-purple-500';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">Tarjeta de Crédito</span>`;
                 } else if (accName.includes('Mercado Pago') || accName.includes('Tenpo') || accName.includes('MACH')) {
-                    badgeColor = 'from-teal-900 via-slate-900 to-slate-950 text-white border-teal-400/40';
-                    icon = 'fa-wallet text-teal-300';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-400/20 text-teal-200 border border-teal-400/40 text-[10px] font-bold">Prepago Digital</span>`;
+                    borderColor = 'border-l-teal-400';
+                    icon = 'fa-wallet text-teal-500';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200 text-[10px] font-bold">Prepago Digital</span>`;
                 } else if (accName.includes('Efectivo') || accName.includes('Billetera')) {
-                    badgeColor = 'from-amber-50 to-orange-50/50 text-slate-900 border-amber-300/80';
-                    icon = 'fa-money-bill-wave text-amber-700';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">Efectivo</span>`;
+                    borderColor = 'border-l-emerald-400';
+                    icon = 'fa-money-bill-wave text-emerald-600';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Efectivo</span>`;
                 }
 
-                const isDark = badgeColor.includes('text-white');
-                const titleColor = isDark ? 'text-white' : 'text-slate-900';
-                const labelColor = isDark ? 'text-slate-300' : 'text-slate-500';
-                const balanceColor = isDark ? 'text-white' : 'text-slate-900';
-
                 return `
-                    <div class="glass-card p-4 rounded-2xl bg-gradient-to-br ${badgeColor} relative overflow-hidden flex flex-col justify-between border space-y-3 transition-all hover:scale-[1.02] shadow-sm">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 border-l-4 ${borderColor} relative overflow-hidden flex flex-col justify-between space-y-3 transition-all hover:shadow-md hover:scale-[1.02] shadow-sm">
                         <div class="flex items-center justify-between">
                             <div class="space-y-1">
-                                <span class="text-xs font-bold ${titleColor} tracking-wide block">${acc.name}</span>
+                                <span class="text-xs font-bold text-slate-800 tracking-wide block">${acc.name}</span>
                                 ${typeBadge}
                             </div>
-                            <div class="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
                                 <i class="fa-solid ${icon} text-sm"></i>
                             </div>
                         </div>
                         <div>
-                            <span class="text-[10px] ${labelColor} uppercase tracking-wider font-semibold">Saldo Disponible</span>
-                            <div class="text-xl font-extrabold ${balanceColor} mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
+                            <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Saldo Disponible</span>
+                            <div class="text-xl font-extrabold text-slate-800 mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
 
 
 
@@ -1297,17 +1303,17 @@
             const list = document.getElementById('categories-list');
             list.innerHTML = categories.map(cat => {
                 const isOver = cat.total_spent > cat.monthly_budget;
-                const barColor = isOver ? 'bg-rose-500' : (cat.percentage_used > 80 ? 'bg-amber-500' : 'bg-teal-500');
+                const barColor = isOver ? 'bg-rose-500' : (cat.percentage_used > 80 ? 'bg-amber-500' : 'bg-indigo-500');
 
                 return `
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-200">${cat.category_name}</span>
-                            <span class="text-slate-400">
-                                <strong class="text-slate-200">${formatCLP(cat.total_spent)}</strong> / ${formatCLP(cat.monthly_budget)}
+                            <span class="font-medium text-slate-700">${cat.category_name}</span>
+                            <span class="text-slate-500">
+                                <strong class="text-slate-700">${formatCLP(cat.total_spent)}</strong> / ${formatCLP(cat.monthly_budget)}
                             </span>
                         </div>
-                        <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                             <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(cat.percentage_used, 100)}%"></div>
                         </div>
                     </div>
@@ -1332,16 +1338,16 @@
                 });
 
                 if (tx.transaction_type === 'EXPENSE') {
-                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30">Gasto</span>`;
-                    amountText = `<span class="text-rose-400 font-bold">-${formatCLP(tx.amount)}</span>`;
+                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-50 text-rose-600 border border-rose-200">Gasto</span>`;
+                    amountText = `<span class="text-rose-600 font-bold">-${formatCLP(tx.amount)}</span>`;
                     subtitle = `${tx.account_name} &bull; ${tx.category_name || 'Sin cat'}`;
                 } else if (tx.transaction_type === 'TRANSFER') {
-                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30">Traspaso</span>`;
-                    amountText = `<span class="text-blue-400 font-bold">${formatCLP(tx.amount)}</span>`;
+                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200">Traspaso</span>`;
+                    amountText = `<span class="text-indigo-600 font-bold">${formatCLP(tx.amount)}</span>`;
                     subtitle = `${tx.account_name} &rarr; ${tx.destination_account_name}`;
                 } else {
-                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Ingreso DJ</span>`;
-                    amountText = `<span class="text-emerald-400 font-bold">+${formatCLP(tx.amount)}</span>`;
+                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200">Ingreso DJ</span>`;
+                    amountText = `<span class="text-emerald-600 font-bold">+${formatCLP(tx.amount)}</span>`;
                     subtitle = `${tx.account_name}`;
                 }
 
@@ -1350,16 +1356,16 @@
                         <div class="space-y-0.5">
                             <div class="flex items-center gap-2">
                                 ${typeBadge}
-                                <span class="font-semibold text-slate-200">${tx.note || 'Transacción'}</span>
+                                <span class="font-semibold text-slate-700">${tx.note || 'Transacción'}</span>
                             </div>
-                            <div class="text-[11px] text-slate-400">${subtitle}</div>
+                            <div class="text-[11px] text-slate-500">${subtitle}</div>
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="text-right space-y-0.5">
                                 <div>${amountText}</div>
-                                <div class="text-[10px] text-slate-500">${dateFormatted}</div>
+                                <div class="text-[10px] text-slate-400">${dateFormatted}</div>
                             </div>
-                            <button onclick="deleteTransaction(${tx.id})" title="Eliminar y revertir saldo" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-400 transition-colors active:scale-90">
+                            <button onclick="deleteTransaction(${tx.id})" title="Eliminar y revertir saldo" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors active:scale-90">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </div>
@@ -1764,17 +1770,17 @@
 
             if (buttons.length === 0 && (user && (user.is_admin || user.email === 'omar@finanzas.local'))) {
                 buttons = [
-                    { name: 'Colectivo Talca', amount: 1000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-teal-500' },
-                    { name: 'Uber Trabajo', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-indigo-500' },
-                    { name: 'Bus Talca-Linares', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-purple-500' }
+                    { name: 'Colectivo Talca', amount: 1000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-indigo-400' },
+                    { name: 'Uber Trabajo', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-purple-400' },
+                    { name: 'Bus Talca-Linares', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-blue-400' }
                 ];
             }
 
             if (buttons.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full p-4 rounded-2xl bg-slate-900/60 border border-slate-800 border-dashed text-center space-y-2">
-                        <p class="text-xs text-slate-400">Aún no tienes atajos de 1-Clic personalizados.</p>
-                        <button onclick="openQuickButtonsModal()" class="px-4 py-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold hover:bg-teal-500/30 transition-all">
+                    <div class="col-span-full p-4 rounded-2xl bg-white border-2 border-dashed border-indigo-200 text-center space-y-2">
+                        <p class="text-xs text-slate-500">Aún no tienes atajos de 1-Clic personalizados.</p>
+                        <button onclick="openQuickButtonsModal()" class="px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition-all">
                             <i class="fa-solid fa-plus mr-1"></i> Crear Mis Botones Rápidos
                         </button>
                     </div>
@@ -1783,19 +1789,20 @@
             }
 
             container.innerHTML = buttons.map(b => {
-                const borderClass = b.color_border || 'border-teal-500';
+                const borderClass = b.color_border || 'border-indigo-400';
                 return `
                     <button onclick="quickExpense('${b.name}', ${b.amount}, '${b.account_name}', '${b.category_name || ''}')" 
-                        class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 ${borderClass} shadow-sm active:scale-95">
+                        class="bg-white p-4 rounded-xl hover:bg-slate-50 transition-all text-left group flex items-center justify-between border border-slate-200 border-l-4 ${borderClass} shadow-sm active:scale-95 hover:shadow-md">
                         <div>
-                            <div class="font-semibold text-sm text-slate-200 group-hover:text-teal-400">${b.name}</div>
-                            <div class="text-xs text-slate-400 mt-0.5">${b.account_name}</div>
+                            <div class="font-semibold text-sm text-slate-700 group-hover:text-indigo-600">${b.name}</div>
+                            <div class="text-xs text-slate-500 mt-0.5">${b.account_name}</div>
                         </div>
-                        <span class="text-sm font-bold text-rose-400">-${formatCLP(b.amount)}</span>
+                        <span class="text-sm font-bold text-rose-500">-${formatCLP(b.amount)}</span>
                     </button>
                 `;
             }).join('');
         }
+
 
         function openQuickButtonsModal() {
             const list = document.getElementById('quick-buttons-inputs-list');
@@ -1825,28 +1832,28 @@
             const catOptions = (cachedCategories || []).map(c => `<option value="${c.name}" ${c.name === categoryName ? 'selected' : ''}>${c.name}</option>`).join('');
 
             const row = document.createElement('div');
-            row.className = 'p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 qb-row';
+            row.className = 'p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 qb-row';
             row.innerHTML = `
                 <div class="flex items-center justify-between gap-2">
-                    <input type="text" placeholder="Nombre (ej: Colectivo, Supermercado)" value="${name}" required class="flex-1 px-3 py-2 rounded-xl bg-slate-800 text-white font-semibold text-xs qb-name focus:outline-none focus:border-teal-500 border border-slate-700">
+                    <input type="text" placeholder="Nombre (ej: Colectivo, Supermercado)" value="${name}" required class="flex-1 px-3 py-2 rounded-xl bg-white text-slate-800 font-semibold text-xs qb-name focus:outline-none focus:border-indigo-500 border border-slate-200">
                     <div class="relative w-32 shrink-0">
                         <span class="absolute left-2.5 top-2 text-slate-400 font-bold text-xs">$</span>
-                        <input type="number" placeholder="Monto" value="${amount}" required min="0" class="w-full pl-6 pr-2 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs qb-amount focus:outline-none focus:border-teal-500 border border-slate-700">
+                        <input type="number" placeholder="Monto" value="${amount}" required min="0" class="w-full pl-6 pr-2 py-2 rounded-xl bg-white text-slate-800 font-bold text-xs qb-amount focus:outline-none focus:border-indigo-500 border border-slate-200">
                     </div>
-                    <button type="button" onclick="this.closest('.qb-row').remove()" class="w-8 h-8 rounded-lg bg-rose-950/40 text-rose-400 hover:bg-rose-900/60 flex items-center justify-center shrink-0">
+                    <button type="button" onclick="this.closest('.qb-row').remove()" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                        <span class="text-[10px] text-slate-400 block mb-0.5">Cuenta:</span>
-                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 qb-account">
+                        <span class="text-[10px] text-slate-500 block mb-0.5">Cuenta:</span>
+                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 qb-account">
                             ${accOptions || '<option value="CuentaRUT">CuentaRUT</option>'}
                         </select>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 block mb-0.5">Categoría:</span>
-                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 qb-category">
+                        <span class="text-[10px] text-slate-500 block mb-0.5">Categoría:</span>
+                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 qb-category">
                             ${catOptions || '<option value="Gastos Generales">Gastos Generales</option>'}
                         </select>
                     </div>
@@ -1854,6 +1861,7 @@
             `;
             list.appendChild(row);
         }
+
 
         async function handleSaveQuickButtons(event) {
             event.preventDefault();
@@ -1927,29 +1935,29 @@
 
 
     <!-- Modal Panel de Administrador -->
-    <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
-        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 space-y-5 border border-amber-500/30 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 space-y-5 border border-amber-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
                         <i class="fa-solid fa-crown text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white">Panel de Administración</h3>
-                        <p class="text-xs text-slate-400">Gestión de usuarios registrados y limpieza de entorno</p>
+                        <h3 class="text-lg font-bold text-slate-800">Panel de Administración</h3>
+                        <p class="text-xs text-slate-500">Gestión de usuarios registrados y limpieza de entorno</p>
                     </div>
                 </div>
-                <button onclick="closeModal('admin-modal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                <button onclick="closeModal('admin-modal')" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div id="admin-users-list" class="space-y-3">
-                <p class="text-xs text-slate-400 text-center py-4">Cargando usuarios...</p>
+                <p class="text-xs text-slate-500 text-center py-4">Cargando usuarios...</p>
             </div>
 
-            <div class="pt-4 border-t border-slate-800 flex justify-end">
-                <button onclick="closeModal('admin-modal')" class="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-sm">
+            <div class="pt-4 border-t border-slate-200 flex justify-end">
+                <button onclick="closeModal('admin-modal')" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold text-sm">
                     Cerrar
                 </button>
             </div>
@@ -1957,42 +1965,42 @@
     </div>
 
     <!-- Modal Wizard de Onboarding Inicial -->
-    <div id="onboarding-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md hidden">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-6 space-y-6 border border-teal-500/30 shadow-2xl">
+    <div id="onboarding-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 space-y-6 border border-indigo-200 shadow-2xl">
             <div class="text-center space-y-2">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
-                    <i class="fa-solid fa-rocket text-slate-950 text-2xl"></i>
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-rocket text-white text-2xl"></i>
                 </div>
-                <h3 class="text-xl font-extrabold text-white">¡Bienvenido a tu Panel Financiero!</h3>
-                <p class="text-xs text-slate-400">Configuremos tu perfil en 1 minuto para adaptar la app a ti.</p>
+                <h3 class="text-xl font-extrabold text-slate-800">¡Bienvenido a tu Panel Financiero!</h3>
+                <p class="text-xs text-slate-500">Configuremos tu perfil en 1 minuto para adaptar la app a ti.</p>
             </div>
 
             <form id="onboarding-form" onsubmit="handleOnboardingSubmit(event)" class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">1. ¿Cuál es tu Renta Líquida Mensual o Ingreso Base?</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">1. ¿Cuál es tu Renta Líquida Mensual o Ingreso Base?</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-3 text-slate-500 font-bold text-sm">$</span>
-                        <input type="number" id="onboard-income" required min="0" placeholder="Ej: 500000" class="w-full pl-9 pr-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-white font-bold text-lg focus:outline-none focus:border-teal-500">
+                        <span class="absolute left-4 top-3 text-slate-400 font-bold text-sm">$</span>
+                        <input type="number" id="onboard-income" required min="0" placeholder="Ej: 500000" class="w-full pl-9 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 font-bold text-lg focus:outline-none focus:border-indigo-500 focus:bg-white">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">2. Presupuestos Fijos Estimados (Opcional)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">2. Presupuestos Fijos Estimados (Opcional)</label>
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <div>
-                            <span class="text-slate-400">Arriendo / Fijo</span>
-                            <input type="number" id="onboard-cat-arriendo" placeholder="170000" class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white">
+                            <span class="text-slate-500">Arriendo / Fijo</span>
+                            <input type="number" id="onboard-cat-arriendo" placeholder="170000" class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white">
                         </div>
                         <div>
-                            <span class="text-slate-400">Transporte</span>
-                            <input type="number" id="onboard-cat-transporte" placeholder="60000" class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white">
+                            <span class="text-slate-500">Transporte</span>
+                            <input type="number" id="onboard-cat-transporte" placeholder="60000" class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white">
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">3. Selecciona tu Banco Principal de Chile</label>
-                    <select id="onboard-bank" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white font-semibold text-xs focus:outline-none focus:border-teal-500">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">3. Selecciona tu Banco Principal de Chile</label>
+                    <select id="onboard-bank" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-xs focus:outline-none focus:border-indigo-500 focus:bg-white">
                         <option value="BancoEstado|CuentaRUT|CuentaRUT BancoEstado">🇨🇱 BancoEstado — CuentaRUT</option>
                         <option value="Banco Santander|Cuenta Corriente|Santander Cuenta Corriente">🏦 Banco Santander — Cuenta Corriente</option>
                         <option value="Banco de Chile|Cuenta Corriente|Banco de Chile">🏦 Banco de Chile / Edwards</option>
@@ -2004,21 +2012,24 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-extrabold rounded-2xl text-sm shadow-lg shadow-teal-500/20 transition-all active:scale-95">
+                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-extrabold rounded-2xl text-sm shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
                         Guardar Configuración & Comenzar 🚀
                     </button>
                 </div>
 
             </form>
         </div>
+    </div>
+
     <!-- Modal Personalizar Atajos Rápidos -->
-    <div id="quick-buttons-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-teal-500/30 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-amber-400"></i> Personalizar Atajos Rápidos
+    <div id="quick-buttons-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden">
+
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-indigo-200 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-500"></i> Personalizar Atajos Rápidos
                 </h3>
-                <button onclick="closeModal('quick-buttons-modal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                <button onclick="closeModal('quick-buttons-modal')" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -2028,36 +2039,36 @@
                     <!-- Lista editable -->
                 </div>
 
-                <button type="button" onclick="addQuickButtonInputRow()" class="w-full py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-slate-300 font-semibold flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-plus text-teal-400"></i> Agregar Otro Botón
+                <button type="button" onclick="addQuickButtonInputRow()" class="w-full py-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs text-slate-600 font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus text-indigo-500"></i> Agregar Otro Botón
                 </button>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('quick-buttons-modal')" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-xs">
+                    <button type="button" onclick="closeModal('quick-buttons-modal')" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold text-xs">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20">
                         Guardar Atajos 🚀
                     </button>
                 </div>
             </form>
         </div>
     <!-- Modal Agregar / Configurar Banco o Tarjeta -->
-    <div id="add-account-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-cyan-500/30 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-building-columns text-cyan-400"></i> Agregar Mi Banco o Tarjeta
+    <div id="add-account-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-blue-200 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-blue-500"></i> Agregar Mi Banco o Tarjeta
                 </h3>
-                <button onclick="closeModal('add-account-modal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                <button onclick="closeModal('add-account-modal')" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <form id="add-account-form" onsubmit="handleAddAccountSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">1. Selecciona tu Banco / Institución</label>
-                    <select id="new-acc-bank" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">1. Selecciona tu Banco / Institución</label>
+                    <select id="new-acc-bank" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 font-semibold">
                         <option value="BancoEstado">🇨🇱 BancoEstado (CuentaRUT)</option>
                         <option value="Banco Santander">🏦 Banco Santander</option>
                         <option value="Banco de Chile">🏦 Banco de Chile / Edwards</option>
@@ -2077,8 +2088,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">2. Tipo de Cuenta o Tarjeta</label>
-                    <select id="new-acc-type" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">2. Tipo de Cuenta o Tarjeta</label>
+                    <select id="new-acc-type" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 font-semibold">
                         <option value="CuentaRUT">💳 CuentaRUT (BancoEstado)</option>
                         <option value="Cuenta Corriente">💳 Cuenta Corriente (Visa / Mastercard)</option>
                         <option value="Cuenta Vista">💳 Cuenta Vista / Débito</option>
@@ -2090,20 +2101,20 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">3. Nombre Personalizado de la Cuenta</label>
-                    <input type="text" id="new-acc-name" required placeholder="Ej: Santander Visa o CMR Falabella" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">3. Nombre Personalizado de la Cuenta</label>
+                    <input type="text" id="new-acc-name" required placeholder="Ej: Santander Visa o CMR Falabella" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white font-semibold">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">4. Saldo Inicial (CLP)</label>
-                    <input type="number" id="new-acc-balance" required min="0" step="any" placeholder="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-bold">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">4. Saldo Inicial (CLP)</label>
+                    <input type="number" id="new-acc-balance" required min="0" step="any" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white font-bold">
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('add-account-modal')" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-xs">
+                    <button type="button" onclick="closeModal('add-account-modal')" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold text-xs">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-cyan-500/20">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/20">
                         Guardar Banco 🚀
                     </button>
                 </div>
