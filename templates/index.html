@@ -315,16 +315,21 @@
         </div>
 
 
-        <!-- Tarjetas de Cuentas (Digitales & Efectivo Billetera) -->
+        <!-- Tarjetas de Cuentas (Bancos de Chile & Billeteras) -->
         <section class="space-y-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                <span>Cuentas & Efectivo en Billetera</span>
-                <span class="text-xs text-amber-400 font-semibold"><i class="fa-solid fa-money-bill-wave"></i> Control Efectivo</span>
-            </h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-cyan-400"></i> Cuentas, Bancos & Tarjetas
+                </h2>
+                <button onclick="openAddAccountModal()" class="text-xs text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1.5 bg-cyan-500/20 px-3 py-1.5 rounded-xl border border-cyan-500/30 transition-all shadow-lg shadow-cyan-500/10">
+                    <i class="fa-solid fa-plus-circle"></i> Agregar Mi Banco
+                </button>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="accounts-list">
                 <!-- Se llena dinámicamente -->
             </div>
         </section>
+
 
         <!-- Presupuestos por Categoría -->
         <section class="space-y-3">
@@ -1147,34 +1152,88 @@
 
         function renderAccounts(accounts) {
             const list = document.getElementById('accounts-list');
+            if (!list) return;
+
             list.innerHTML = accounts.map(acc => {
-                let badgeColor = 'from-slate-700 to-slate-800';
-                let icon = 'fa-building-columns';
-                if (acc.name === 'CuentaRUT') {
-                    badgeColor = 'from-blue-600/30 to-slate-800';
-                    icon = 'fa-credit-card';
-                } else if (acc.name.includes('Disponible')) {
-                    badgeColor = 'from-teal-600/30 to-slate-800';
-                    icon = 'fa-wallet';
-                } else if (acc.name.includes('Ahorro')) {
-                    badgeColor = 'from-purple-600/30 to-slate-800';
-                    icon = 'fa-piggy-bank';
-                } else if (acc.name.includes('Efectivo') || acc.name.includes('Billetera')) {
-                    badgeColor = 'from-emerald-600/30 to-amber-900/40 border border-amber-500/30';
-                    icon = 'fa-money-bill-wave text-amber-400';
+                let badgeColor = 'from-slate-900 to-slate-800/90 border-slate-700/80';
+                let icon = 'fa-building-columns text-cyan-400';
+                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
+
+                const accName = acc.name || '';
+                const bankName = acc.bank_name || '';
+
+                if (accName.includes('CuentaRUT') || bankName.includes('BancoEstado')) {
+                    badgeColor = 'from-blue-950/70 to-slate-900 border-amber-500/40';
+                    icon = 'fa-credit-card text-amber-400';
+                    if (accName.includes('CuentaRUT')) {
+                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">CuentaRUT</span>`;
+                    }
+                } else if (acc.account_type?.includes('Crédito') || accName.includes('Crédito') || accName.includes('CMR')) {
+                    badgeColor = 'from-purple-950/70 to-slate-900 border-purple-500/40 shadow-lg shadow-purple-950/30';
+                    icon = 'fa-credit-card text-purple-400 animate-pulse';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
+                } else if (accName.includes('Mercado Pago') || accName.includes('Tenpo') || accName.includes('MACH')) {
+                    badgeColor = 'from-teal-950/70 to-slate-900 border-teal-500/30';
+                    icon = 'fa-wallet text-teal-400';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/30 text-[10px] font-bold">Prepago Digital</span>`;
+                } else if (accName.includes('Efectivo') || accName.includes('Billetera')) {
+                    badgeColor = 'from-emerald-950/70 to-amber-950/40 border-amber-500/30';
+                    icon = 'fa-money-bill-wave text-emerald-400';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">Efectivo</span>`;
                 }
 
                 return `
-                    <div class="glass-card p-4 rounded-2xl bg-gradient-to-br ${badgeColor} relative overflow-hidden">
+                    <div class="glass-card p-4 rounded-2xl bg-gradient-to-br ${badgeColor} relative overflow-hidden flex flex-col justify-between border space-y-3 transition-all hover:scale-[1.02] shadow-xl">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-300">${acc.name}</span>
-                            <i class="fa-solid ${icon} text-sm"></i>
+                            <div class="space-y-1">
+                                <span class="text-xs font-bold text-white tracking-wide block">${acc.name}</span>
+                                ${typeBadge}
+                            </div>
+                            <div class="w-9 h-9 rounded-xl bg-slate-900/80 border border-slate-700 flex items-center justify-center shrink-0">
+                                <i class="fa-solid ${icon} text-sm"></i>
+                            </div>
                         </div>
-                        <div class="text-xl font-bold text-white mt-2">${formatCLP(acc.balance)}</div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Saldo Disponible</span>
+                            <div class="text-xl font-extrabold text-white mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
+
+        function openAddAccountModal() {
+            openModal('add-account-modal');
+        }
+
+        async function handleAddAccountSubmit(event) {
+            event.preventDefault();
+            const bank_name = document.getElementById('new-acc-bank').value;
+            const account_type = document.getElementById('new-acc-type').value;
+            const name = document.getElementById('new-acc-name').value.trim();
+            const balance = parseFloat(document.getElementById('new-acc-balance').value) || 0.0;
+
+            try {
+                const response = await fetch('/api/accounts', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ name, bank_name, account_type, balance })
+                });
+
+                if (response.ok) {
+                    showToast(`🎉 ¡Cuenta "${name}" agregada con éxito!`);
+                    closeModal('add-account-modal');
+                    document.getElementById('add-account-form').reset();
+                    refreshData();
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Error al agregar cuenta', 'error');
+                }
+            } catch (err) {
+                showToast('Error de servidor', 'error');
+            }
+        }
+
 
         function renderCategories(categories) {
             const list = document.getElementById('categories-list');
@@ -1864,8 +1923,76 @@
                 </div>
             </form>
         </div>
+    <!-- Modal Agregar / Configurar Banco o Tarjeta -->
+    <div id="add-account-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-cyan-500/30 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-cyan-400"></i> Agregar Mi Banco o Tarjeta
+                </h3>
+                <button onclick="closeModal('add-account-modal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="add-account-form" onsubmit="handleAddAccountSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">1. Selecciona tu Banco / Institución</label>
+                    <select id="new-acc-bank" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                        <option value="BancoEstado">🇨🇱 BancoEstado (CuentaRUT)</option>
+                        <option value="Banco Santander">🏦 Banco Santander</option>
+                        <option value="Banco de Chile">🏦 Banco de Chile / Edwards</option>
+                        <option value="BCI">🏦 BCI (Crédito / Corriente)</option>
+                        <option value="Banco Falabella">🛍️ Banco Falabella / CMR</option>
+                        <option value="Banco Itaú">🏦 Banco Itaú</option>
+                        <option value="Scotiabank">🏦 Scotiabank</option>
+                        <option value="Banco BICE">🏦 Banco BICE</option>
+                        <option value="Banco Security">🏦 Banco Security</option>
+                        <option value="Banco Consorcio">🏦 Banco Consorcio</option>
+                        <option value="Coopeuch">🏦 Coopeuch</option>
+                        <option value="Mercado Pago">📱 Mercado Pago</option>
+                        <option value="MACH">📱 MACH (BCI)</option>
+                        <option value="Tenpo">📱 Tenpo Prepago</option>
+                        <option value="Efectivo">💵 Efectivo / Billetera</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">2. Tipo de Cuenta o Tarjeta</label>
+                    <select id="new-acc-type" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                        <option value="CuentaRUT">💳 CuentaRUT (BancoEstado)</option>
+                        <option value="Cuenta Corriente">💳 Cuenta Corriente (Visa / Mastercard)</option>
+                        <option value="Cuenta Vista">💳 Cuenta Vista / Débito</option>
+                        <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito (Visa / Mastercard / CMR)</option>
+                        <option value="Prepago">📱 Prepago / Billetera Digital</option>
+                        <option value="Cuenta de Ahorro">🐷 Cuenta de Ahorro</option>
+                        <option value="Efectivo Billetera">💵 Efectivo en Billetera</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">3. Nombre Personalizado de la Cuenta</label>
+                    <input type="text" id="new-acc-name" required placeholder="Ej: Santander Visa o CMR Falabella" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">4. Saldo Inicial (CLP)</label>
+                    <input type="number" id="new-acc-balance" required min="0" step="any" placeholder="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 font-bold">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('add-account-modal')" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-xs">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-cyan-500/20">
+                        Guardar Banco 🚀
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 </html>
+
 
 

@@ -59,6 +59,8 @@ class QuickButtonsUpdate(BaseModel):
 # Esquemas de Cuenta
 class AccountBase(BaseModel):
     name: str
+    bank_name: Optional[str] = "BancoEstado"
+    account_type: Optional[str] = "Cuenta Vista"
     balance: float
 
 class AccountCreate(AccountBase):
@@ -67,6 +69,7 @@ class AccountCreate(AccountBase):
 class AccountResponse(AccountBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
 
 
 # Esquemas de Categoría

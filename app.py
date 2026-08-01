@@ -26,6 +26,13 @@ def run_auto_migrations():
         except Exception:
             pass
 
+    for col, col_type in [("bank_name", "VARCHAR DEFAULT 'BancoEstado'"), ("account_type", "VARCHAR DEFAULT 'Cuenta Vista'")]:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE account ADD COLUMN {col} {col_type};"))
+        except Exception:
+            pass
+
     for col, col_type in [("is_admin", "BOOLEAN DEFAULT FALSE"), ("monthly_income", "FLOAT DEFAULT 0.0"), ("onboarding_completed", "BOOLEAN DEFAULT FALSE"), ("quick_buttons_json", "VARCHAR")]:
         try:
             with engine.begin() as conn:
@@ -39,6 +46,7 @@ def run_auto_migrations():
                 conn.execute(text(f"UPDATE {table} SET user_id = 1 WHERE user_id IS NULL;"))
         except Exception:
             pass
+
 
 
 
@@ -167,6 +175,11 @@ def complete_onboarding(data: schemas.OnboardingRequest, db: Session = Depends(g
 def update_quick_buttons(data: schemas.QuickButtonsUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     buttons = [b.model_dump() for b in data.quick_buttons]
     return crud.update_user_quick_buttons(db, current_user.id, buttons)
+
+@app.post("/api/accounts", response_model=schemas.AccountResponse)
+def create_account(acc_data: schemas.AccountCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    return crud.create_user_account(db, current_user.id, acc_data)
+
 
 
 

@@ -2,11 +2,12 @@ from sqlalchemy.orm import Session
 import models
 
 INITIAL_ACCOUNTS = [
-    {"name": "CuentaRUT", "balance": 0.0},
-    {"name": "Mercado Pago Disponible", "balance": 0.0},
-    {"name": "Mercado Pago Ahorro", "balance": 0.0},
-    {"name": "Efectivo (Billetera)", "balance": 0.0},
+    {"name": "CuentaRUT", "bank_name": "BancoEstado", "account_type": "CuentaRUT", "balance": 0.0},
+    {"name": "Mercado Pago Disponible", "bank_name": "Mercado Pago", "account_type": "Prepago", "balance": 0.0},
+    {"name": "Mercado Pago Ahorro", "bank_name": "Mercado Pago", "account_type": "Cuenta de Ahorro", "balance": 0.0},
+    {"name": "Efectivo (Billetera)", "bank_name": "Efectivo", "account_type": "Efectivo Billetera", "balance": 0.0},
 ]
+
 
 INITIAL_CATEGORIES = [
     {"name": "Arriendo (Fijo)", "monthly_budget": 170000.0},

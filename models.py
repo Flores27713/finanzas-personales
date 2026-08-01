@@ -33,9 +33,12 @@ class Account(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     name = Column(String, nullable=False)
+    bank_name = Column(String, default="BancoEstado", nullable=False)
+    account_type = Column(String, default="Cuenta Vista", nullable=False)
     balance = Column(Float, default=0.0, nullable=False)
 
     user = relationship("User", back_populates="accounts")
+
     outgoing_transactions = relationship(
         "Transaction",
         foreign_keys="Transaction.account_id",

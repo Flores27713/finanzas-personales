@@ -169,11 +169,25 @@ def test_system():
     assert qb_resp.status_code == 200, f"Error al guardar atajos: {qb_resp.text}"
     print("[OK] Atajos de 1-Clic personalizados correctamente por el usuario")
 
-    # 13. Probar Borrado de Usuario B desde el Panel de Admin
+    # 13. Probar Creación de Banco Personalizado / Tarjeta de Crédito (POST /api/accounts)
+    acc_create_resp = client.post("/api/accounts", json={
+        "name": "CMR Falabella Visa",
+        "bank_name": "Banco Falabella",
+        "account_type": "Tarjeta de Crédito",
+        "balance": 250000.0
+    }, headers=headersB)
+    assert acc_create_resp.status_code == 200, f"Error al crear cuenta: {acc_create_resp.text}"
+    new_acc = acc_create_resp.json()
+    assert new_acc["bank_name"] == "Banco Falabella"
+    assert new_acc["account_type"] == "Tarjeta de Crédito"
+    print(f"[OK] Banco / Tarjeta de Crédito '{new_acc['name']}' creada exitosamente")
+
+    # 14. Probar Borrado de Usuario B desde el Panel de Admin
     userB_id = userB_data["user"]["id"]
     del_resp = client.delete(f"/api/admin/users/{userB_id}", headers=headers)
     assert del_resp.status_code == 200, f"Error al eliminar usuario B: {del_resp.text}"
     print(f"[OK] Usuario B (ID #{userB_id}) eliminado limpiamente desde el Panel de Administración")
+
 
 
     print("--- TODAS LAS PRUEBAS DE SEGURIDAD E INTEGRIDAD PASARON CON EXITO ---")

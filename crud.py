@@ -35,12 +35,18 @@ def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 def ensure_user_defaults(db: Session, user_id: int):
-    """Garantiza que el usuario tenga sus 4 cuentas y 6 categorías asociadas."""
+    """Garantiza que el usuario tenga sus cuentas y categorías asociadas."""
     accounts = db.query(models.Account).filter(models.Account.user_id == user_id).all()
     if not accounts:
         for acc in INITIAL_ACCOUNTS:
             try:
-                acc_obj = models.Account(user_id=user_id, name=acc["name"], balance=acc["balance"])
+                acc_obj = models.Account(
+                    user_id=user_id,
+                    name=acc["name"],
+                    bank_name=acc.get("bank_name", "BancoEstado"),
+                    account_type=acc.get("account_type", "Cuenta Vista"),
+                    balance=acc["balance"]
+                )
                 db.add(acc_obj)
                 db.commit()
             except Exception:
@@ -55,6 +61,20 @@ def ensure_user_defaults(db: Session, user_id: int):
                 db.commit()
             except Exception:
                 db.rollback()
+
+def create_user_account(db: Session, user_id: int, acc_data: schemas.AccountCreate):
+    account = models.Account(
+        user_id=user_id,
+        name=acc_data.name,
+        bank_name=acc_data.bank_name or "BancoEstado",
+        account_type=acc_data.account_type or "Cuenta Vista",
+        balance=acc_data.balance
+    )
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+    return account
+
 
 
 def create_user_with_defaults(db: Session, name: str, email: str, password: str = None, google_id: str = None, picture: str = None):
