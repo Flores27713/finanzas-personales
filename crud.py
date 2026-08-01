@@ -140,15 +140,23 @@ def delete_transaction(db: Session, transaction_id: int):
 
 def reset_database(db: Session):
     """
-    Borra todas las transacciones, cuentas y categorías, y vuelve a sembrar los datos iniciales limpios.
+    Reinicia los saldos de las cuentas a $0 para comenzar un nuevo mes limpio,
+    preservando el historial de meses anteriores para los Reportes Mensuales.
     """
-    from seed import seed_database
-    db.query(models.Transaction).delete()
-    db.query(models.Account).delete()
-    db.query(models.Category).delete()
+    now = datetime.now()
+    # Eliminar únicamente transacciones del mes actual para no perder reportes de meses pasados
+    db.query(models.Transaction).filter(
+        extract("year", models.Transaction.date) == now.year,
+        extract("month", models.Transaction.date) == now.month
+    ).delete(synchronize_session=False)
+
+    # Reiniciar saldos de cuentas a $0
+    accounts = get_accounts(db)
+    for acc in accounts:
+        acc.balance = 0.0
+
     db.commit()
-    seed_database(db)
-    return {"status": "ok", "message": "Base de datos reiniciada con éxito. Listo para empezar de cero."}
+    return {"status": "ok", "message": "Saldos del mes reiniciados a $0. El historial de reportes mensuales pasados se mantiene intacto."}
 
 
 def get_recent_transactions(db: Session, limit: int = 20):
