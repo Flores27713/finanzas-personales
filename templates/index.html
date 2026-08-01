@@ -1014,7 +1014,7 @@
             const legendContainer = document.getElementById('chart-legend');
 
             if (activeCategories.length === 0) {
-                legendContainer.innerHTML = `<div class="text-slate-400 italic py-4 text-center">Aún no hay gastos registrados este mes. ¡Sigue así!</div>`;
+                legendContainer.innerHTML = `<div class="text-slate-500 italic py-6 text-center bg-slate-50 rounded-2xl border border-slate-200 text-xs">Aún no hay gastos registrados este mes. ¡Sigue así!</div>`;
                 if (expenseChartInstance) {
                     expenseChartInstance.destroy();
                     expenseChartInstance = null;
@@ -1023,7 +1023,13 @@
             }
 
             const COLORS = [
-                '#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#a855f7', '#ec4899', '#06b6d4'
+                '#6366F1', // Indigo
+                '#F43F5E', // Rose
+                '#10B981', // Emerald
+                '#F59E0B', // Amber
+                '#3B82F6', // Blue
+                '#8B5CF6', // Purple
+                '#14B8A6'  // Teal
             ];
 
             const labels = activeCategories.map(c => c.category_name);
@@ -1035,14 +1041,14 @@
                 const color = bgColors[i];
 
                 return `
-                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${color}"></span>
-                            <span class="truncate font-medium text-slate-200">${c.category_name}</span>
+                    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-all text-xs">
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <span class="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm" style="background-color: ${color}"></span>
+                            <span class="truncate font-bold text-slate-800">${c.category_name}</span>
                         </div>
-                        <div class="flex items-center gap-2 shrink-0 font-bold">
-                            <span style="color: ${color}">${pct}%</span>
-                            <span class="text-slate-400 font-normal">(${formatCLP(c.total_spent)})</span>
+                        <div class="flex items-center gap-2 shrink-0 font-extrabold">
+                            <span style="color: ${color}" class="text-xs">${pct}%</span>
+                            <span class="text-slate-500 font-semibold text-[11px]">(${formatCLP(c.total_spent)})</span>
                         </div>
                     </div>
                 `;
@@ -1060,15 +1066,15 @@
                     datasets: [{
                         data: dataValues,
                         backgroundColor: bgColors,
-                        borderWidth: 2,
-                        borderColor: '#0b0f19',
-                        hoverOffset: 6
+                        borderWidth: 3,
+                        borderColor: '#FFFFFF',
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '68%',
+                    cutout: '72%',
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -1084,6 +1090,7 @@
                 }
             });
         }
+
 
         async function fetchDashboard() {
             try {
