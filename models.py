@@ -3,14 +3,34 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=True) # Nulo si accede por Google
+    google_id = Column(String, unique=True, nullable=True)
+    picture = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
+    categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<User(id={self.id}, name='{self.name}', email='{self.email}')>"
+
+
 class Account(Base):
     __tablename__ = "account"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    name = Column(String, nullable=False)
     balance = Column(Float, default=0.0, nullable=False)
 
-    # Relaciones
+    user = relationship("User", back_populates="accounts")
     outgoing_transactions = relationship(
         "Transaction",
         foreign_keys="Transaction.account_id",
@@ -30,10 +50,11 @@ class Category(Base):
     __tablename__ = "category"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    name = Column(String, nullable=False)
     monthly_budget = Column(Float, default=0.0, nullable=False)
 
-    # Relación
+    user = relationship("User", back_populates="categories")
     transactions = relationship("Transaction", back_populates="category")
 
     def __repr__(self):
@@ -44,6 +65,7 @@ class Transaction(Base):
     __tablename__ = "transaction"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     amount = Column(Float, nullable=False)
     transaction_type = Column(String, nullable=False) # 'EXPENSE', 'INCOME', 'TRANSFER'
     
@@ -54,7 +76,7 @@ class Transaction(Base):
     date = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     note = Column(String, nullable=True)
 
-    # Relaciones ORM
+    user = relationship("User", back_populates="transactions")
     account = relationship("Account", foreign_keys=[account_id], back_populates="outgoing_transactions")
     destination_account = relationship("Account", foreign_keys=[destination_account_id], back_populates="incoming_transactions")
     category = relationship("Category", back_populates="transactions")

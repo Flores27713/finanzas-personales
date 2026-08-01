@@ -1,4 +1,5 @@
 import calendar
+import hashlib
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
@@ -6,6 +7,7 @@ from fastapi import HTTPException
 
 import models
 import schemas
+from seed import INITIAL_ACCOUNTS, INITIAL_CATEGORIES
 
 MONTH_NAMES = {
     1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
@@ -13,34 +15,93 @@ MONTH_NAMES = {
     9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
 }
 
-def get_accounts(db: Session):
-    return db.query(models.Account).all()
+def hash_password(password: str) -> str:
+    return hashlib.sha256((password + "finanzas_secret_salt_2026").encode('utf-8')).hexdigest()
 
-def get_account_by_id(db: Session, account_id: int):
-    return db.query(models.Account).filter(models.Account.id == account_id).first()
-
-def get_categories(db: Session):
-    return db.query(models.Category).all()
-
-def get_category_by_id(db: Session, category_id: int):
-    return db.query(models.Category).filter(models.Category.id == category_id).first()
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return hash_password(plain_password) == hashed_password
 
 
-def record_expense(db: Session, expense: schemas.ExpenseCreate):
-    account = get_account_by_id(db, expense.account_id)
+# ==========================================
+# FUNCIONES DE USUARIO & AUTENTICACIÓN
+# ==========================================
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(func.lower(models.User.email) == email.lower().strip()).first()
+
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def create_user_with_defaults(db: Session, name: str, email: str, password: str = None, google_id: str = None, picture: str = None):
+    existing = get_user_by_email(db, email)
+    if existing:
+        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado")
+
+    hashed_pw = hash_password(password) if password else None
+
+    db_user = models.User(
+        name=name.strip(),
+        email=email.lower().strip(),
+        hashed_password=hashed_pw,
+        google_id=google_id,
+        picture=picture
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    # Crear cuentas por defecto para el nuevo usuario
+    for acc in INITIAL_ACCOUNTS:
+        acc_obj = models.Account(user_id=db_user.id, name=acc["name"], balance=0.0)
+        db.add(acc_obj)
+
+    # Crear categorías por defecto para el nuevo usuario
+    for cat in INITIAL_CATEGORIES:
+        cat_obj = models.Category(user_id=db_user.id, name=cat["name"], monthly_budget=cat["monthly_budget"])
+        db.add(cat_obj)
+
+    db.commit()
+    return db_user
+
+
+def authenticate_user_email(db: Session, email: str, password: str):
+    user = get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
+    if not user.hashed_password or not verify_password(password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
+    return user
+
+
+# ==========================================
+# FUNCIONES MULTI-TENANT (POR USER_ID)
+# ==========================================
+def get_accounts(db: Session, user_id: int):
+    return db.query(models.Account).filter(models.Account.user_id == user_id).all()
+
+def get_account_by_id(db: Session, account_id: int, user_id: int):
+    return db.query(models.Account).filter(models.Account.id == account_id, models.Account.user_id == user_id).first()
+
+def get_categories(db: Session, user_id: int):
+    return db.query(models.Category).filter(models.Category.user_id == user_id).all()
+
+def get_category_by_id(db: Session, category_id: int, user_id: int):
+    return db.query(models.Category).filter(models.Category.id == category_id, models.Category.user_id == user_id).first()
+
+
+def record_expense(db: Session, expense: schemas.ExpenseCreate, user_id: int):
+    account = get_account_by_id(db, expense.account_id, user_id)
     if not account:
         raise HTTPException(status_code=404, detail="Cuenta de origen no encontrada")
 
     if expense.category_id:
-        category = get_category_by_id(db, expense.category_id)
+        category = get_category_by_id(db, expense.category_id, user_id)
         if not category:
             raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-    # Actualizar saldo de la cuenta de origen
     account.balance -= expense.amount
 
-    # Crear la transacción
     db_tx = models.Transaction(
+        user_id=user_id,
         amount=expense.amount,
         transaction_type="EXPENSE",
         account_id=expense.account_id,
@@ -55,24 +116,23 @@ def record_expense(db: Session, expense: schemas.ExpenseCreate):
     return db_tx
 
 
-def record_transfer(db: Session, transfer: schemas.TransferCreate):
+def record_transfer(db: Session, transfer: schemas.TransferCreate, user_id: int):
     if transfer.account_id == transfer.destination_account_id:
         raise HTTPException(status_code=400, detail="La cuenta de origen y destino no pueden ser iguales")
 
-    source_account = get_account_by_id(db, transfer.account_id)
+    source_account = get_account_by_id(db, transfer.account_id, user_id)
     if not source_account:
         raise HTTPException(status_code=404, detail="Cuenta de origen no encontrada")
 
-    dest_account = get_account_by_id(db, transfer.destination_account_id)
+    dest_account = get_account_by_id(db, transfer.destination_account_id, user_id)
     if not dest_account:
         raise HTTPException(status_code=404, detail="Cuenta de destino no encontrada")
 
-    # Modificar saldos
     source_account.balance -= transfer.amount
     dest_account.balance += transfer.amount
 
-    # Crear la transacción
     db_tx = models.Transaction(
+        user_id=user_id,
         amount=transfer.amount,
         transaction_type="TRANSFER",
         account_id=transfer.account_id,
@@ -88,14 +148,15 @@ def record_transfer(db: Session, transfer: schemas.TransferCreate):
     return db_tx
 
 
-def record_income(db: Session, income: schemas.IncomeCreate):
-    account = get_account_by_id(db, income.account_id)
+def record_income(db: Session, income: schemas.IncomeCreate, user_id: int):
+    account = get_account_by_id(db, income.account_id, user_id)
     if not account:
         raise HTTPException(status_code=404, detail="Cuenta no encontrada")
 
     account.balance += income.amount
 
     db_tx = models.Transaction(
+        user_id=user_id,
         amount=income.amount,
         transaction_type="INCOME",
         account_id=income.account_id,
@@ -108,28 +169,24 @@ def record_income(db: Session, income: schemas.IncomeCreate):
     return db_tx
 
 
-def delete_transaction(db: Session, transaction_id: int):
-    """
-    Elimina una transacción por su ID y revierte automáticamente los saldos en las cuentas correspondientes.
-    """
-    tx = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+def delete_transaction(db: Session, transaction_id: int, user_id: int):
+    tx = db.query(models.Transaction).filter(models.Transaction.id == transaction_id, models.Transaction.user_id == user_id).first()
     if not tx:
         raise HTTPException(status_code=404, detail="Transacción no encontrada")
 
-    # Revertir saldos según el tipo de transacción
     if tx.transaction_type == "EXPENSE":
-        account = get_account_by_id(db, tx.account_id)
+        account = get_account_by_id(db, tx.account_id, user_id)
         if account:
             account.balance += tx.amount
     elif tx.transaction_type == "TRANSFER":
-        source_account = get_account_by_id(db, tx.account_id)
-        dest_account = get_account_by_id(db, tx.destination_account_id)
+        source_account = get_account_by_id(db, tx.account_id, user_id)
+        dest_account = get_account_by_id(db, tx.destination_account_id, user_id)
         if source_account:
             source_account.balance += tx.amount
         if dest_account:
             dest_account.balance -= tx.amount
     elif tx.transaction_type == "INCOME":
-        account = get_account_by_id(db, tx.account_id)
+        account = get_account_by_id(db, tx.account_id, user_id)
         if account:
             account.balance -= tx.amount
 
@@ -138,20 +195,15 @@ def delete_transaction(db: Session, transaction_id: int):
     return {"status": "ok", "message": f"Transacción #{transaction_id} eliminada y saldo revertido correctamente"}
 
 
-def reset_database(db: Session):
-    """
-    Reinicia los saldos de las cuentas a $0 para comenzar un nuevo mes limpio,
-    preservando el historial de meses anteriores para los Reportes Mensuales.
-    """
+def reset_database(db: Session, user_id: int):
     now = datetime.now()
-    # Eliminar únicamente transacciones del mes actual para no perder reportes de meses pasados
     db.query(models.Transaction).filter(
+        models.Transaction.user_id == user_id,
         extract("year", models.Transaction.date) == now.year,
         extract("month", models.Transaction.date) == now.month
     ).delete(synchronize_session=False)
 
-    # Reiniciar saldos de cuentas a $0
-    accounts = get_accounts(db)
+    accounts = get_accounts(db, user_id)
     for acc in accounts:
         acc.balance = 0.0
 
@@ -159,8 +211,8 @@ def reset_database(db: Session):
     return {"status": "ok", "message": "Saldos del mes reiniciados a $0. El historial de reportes mensuales pasados se mantiene intacto."}
 
 
-def get_recent_transactions(db: Session, limit: int = 20):
-    txs = db.query(models.Transaction).order_by(models.Transaction.date.desc()).limit(limit).all()
+def get_recent_transactions(db: Session, user_id: int, limit: int = 20):
+    txs = db.query(models.Transaction).filter(models.Transaction.user_id == user_id).order_by(models.Transaction.date.desc()).limit(limit).all()
     result = []
     for tx in txs:
         tx_dict = {
@@ -180,19 +232,16 @@ def get_recent_transactions(db: Session, limit: int = 20):
     return result
 
 
-def get_dashboard_summary(db: Session):
-    accounts = get_accounts(db)
-    categories = get_categories(db)
+def get_dashboard_summary(db: Session, user_id: int):
+    accounts = get_accounts(db, user_id)
+    categories = get_categories(db, user_id)
 
-    # 1. Saldo consolidado total
     total_balance = sum(acc.balance for acc in accounts)
 
-    # 2. Gastos por categoría en el mes actual
     now = datetime.now()
     current_year = now.year
     current_month = now.month
 
-    # Calcular días restantes en el mes
     _, total_days_in_month = calendar.monthrange(current_year, current_month)
     days_remaining = total_days_in_month - now.day + 1
     if days_remaining <= 0:
@@ -200,10 +249,10 @@ def get_dashboard_summary(db: Session):
 
     categories_summary = []
     for cat in categories:
-        # Sumar transacciones de tipo EXPENSE para esta categoría en el mes actual
         spent_query = (
             db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
             .filter(
+                models.Transaction.user_id == user_id,
                 models.Transaction.category_id == cat.id,
                 models.Transaction.transaction_type == "EXPENSE",
                 extract("year", models.Transaction.date) == current_year,
@@ -222,19 +271,16 @@ def get_dashboard_summary(db: Session):
             "percentage_used": round(percentage, 1)
         })
 
-    # 3. Límite diario disponible para gastos hormiga (Blindaje de Arriendo y Cuentas Fijas)
     liquid_accounts = [acc for acc in accounts if acc.name in ["CuentaRUT", "Mercado Pago Disponible", "Efectivo (Billetera)"]]
     liquid_balance = sum(max(0.0, acc.balance) for acc in liquid_accounts)
 
-    # Calcular monto comprometido pendiente para Arriendo y Gastos Fijos en el mes
     committed_expenses = 0.0
     for cat_item in categories_summary:
         name_lower = cat_item["category_name"].lower()
-        if "arriendo" in name_lower or "cuentas básicas" in name_lower or "fijo" in name_lower:
+        if "arriendo" in name_lower or "fijo" in name_lower:
             pending = max(0.0, cat_item["monthly_budget"] - cat_item["total_spent"])
             committed_expenses += pending
 
-    # Saldo Libre Real disponible descontando la reserva de arriendo
     free_balance = max(0.0, liquid_balance - committed_expenses)
     daily_hormiga_limit = round(free_balance / days_remaining, 0)
 
@@ -249,14 +295,11 @@ def get_dashboard_summary(db: Session):
     }
 
 
-def get_monthly_report(db: Session, year: int, month: int):
-    """
-    Genera un reporte de cierre mensual con totales de ingresos, gastos, desglose y recomendaciones de ahorro.
-    """
-    # Total de Ingresos (INCOME) en el mes seleccionado
+def get_monthly_report(db: Session, user_id: int, year: int, month: int):
     total_income = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
         .filter(
+            models.Transaction.user_id == user_id,
             models.Transaction.transaction_type == "INCOME",
             extract("year", models.Transaction.date) == year,
             extract("month", models.Transaction.date) == month
@@ -265,10 +308,10 @@ def get_monthly_report(db: Session, year: int, month: int):
     )
     total_income = float(total_income)
 
-    # Total de Gastos (EXPENSE) en el mes seleccionado
     total_expense = (
         db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
         .filter(
+            models.Transaction.user_id == user_id,
             models.Transaction.transaction_type == "EXPENSE",
             extract("year", models.Transaction.date) == year,
             extract("month", models.Transaction.date) == month
@@ -279,13 +322,13 @@ def get_monthly_report(db: Session, year: int, month: int):
 
     net_savings = total_income - total_expense
 
-    # Desglose por categoría en ese mes
-    categories = get_categories(db)
+    categories = get_categories(db, user_id)
     categories_breakdown = []
     for cat in categories:
         spent = (
             db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
             .filter(
+                models.Transaction.user_id == user_id,
                 models.Transaction.category_id == cat.id,
                 models.Transaction.transaction_type == "EXPENSE",
                 extract("year", models.Transaction.date) == year,
@@ -304,7 +347,6 @@ def get_monthly_report(db: Session, year: int, month: int):
 
     sorted_cats = sorted(categories_breakdown, key=lambda x: x["total_spent"], reverse=True)
 
-    # Recomendaciones Inteligentes de Ahorro
     recommendations = []
     top_spent_cat = next((c for c in sorted_cats if c["total_spent"] > 0), None)
     if top_spent_cat:

@@ -29,6 +29,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Sign-In SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,27 +56,108 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- Pantalla de Bloqueo PIN -->
-    <div id="pin-lockscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
-        <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-center space-y-6 shadow-2xl border border-slate-800">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
-                <i class="fa-solid fa-lock text-slate-950 text-2xl"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-white">Acceso Protegido</h2>
-                <p class="text-xs text-slate-400 mt-1">Ingresa tu PIN de seguridad para acceder a tus finanzas</p>
-            </div>
+    <!-- Pantalla de Autenticación Universal (Login / Registro / Google) -->
+    <div id="auth-lockscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl border border-slate-800">
             
-            <form onsubmit="handlePinLogin(event)" class="space-y-4">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
+                    <i class="fa-solid fa-wallet text-slate-950 text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-white">Finanzas Personales</h2>
+                <p class="text-xs text-slate-400">Inicia sesión o crea tu cuenta para acceder</p>
+            </div>
+
+            <!-- Botón Oficial de Google Sign-In -->
+            <div class="space-y-3">
+                <div id="g_id_onload"
+                    data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                    data-callback="handleGoogleCredentialResponse"
+                    data-auto_prompt="false">
+                </div>
+                
+                <button type="button" onclick="promptGoogleSignIn()" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-2xl text-sm border border-slate-700 shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Continuar con Google</span>
+                </button>
+
+                <div class="flex items-center gap-3 my-3">
+                    <div class="h-px bg-slate-800 flex-1"></div>
+                    <span class="text-[11px] text-slate-500 font-semibold uppercase">o correo electrónico</span>
+                    <div class="h-px bg-slate-800 flex-1"></div>
+                </div>
+            </div>
+
+            <!-- Navegación por Pestañas (Login vs Registro vs PIN) -->
+            <div class="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
+                <button type="button" id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all">
+                    Iniciar Sesión
+                </button>
+                <button type="button" id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+                    Crear Cuenta
+                </button>
+                <button type="button" id="tab-pin-btn" onclick="switchAuthTab('pin')" class="flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+                    PIN
+                </button>
+            </div>
+
+            <!-- Formulario 1: Iniciar Sesión Email -->
+            <form id="form-email-login" onsubmit="handleEmailLoginSubmit(event)" class="space-y-4">
                 <div>
-                    <input type="password" id="input-pin" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="****" required autofocus
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+                    <input type="email" id="login-email" required placeholder="tu@correo.com"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required placeholder="••••••••"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                </div>
+                <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-teal-600/25 transition-all active:scale-95">
+                    Ingresar a mis Finanzas
+                </button>
+            </form>
+
+            <!-- Formulario 2: Crear Cuenta -->
+            <form id="form-email-register" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="reg-name" required placeholder="Ej: Omar Flores"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+                    <input type="email" id="reg-email" required placeholder="tu@correo.com"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Contraseña (Mínimo 4 caracteres)</label>
+                    <input type="password" id="reg-password" minlength="4" required placeholder="••••••••"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                </div>
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-emerald-600/25 transition-all active:scale-95">
+                    Crear mi Cuenta Gratis
+                </button>
+            </form>
+
+            <!-- Formulario 3: PIN Rápido Legacy (2771) -->
+            <form id="form-pin-login" onsubmit="handlePinLogin(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">PIN de Acceso Rápido</label>
+                    <input type="password" id="input-pin" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="****"
                         class="w-full text-center tracking-[0.5em] text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl py-3 text-white focus:outline-none focus:border-teal-500">
                 </div>
                 <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-teal-600/25 transition-all active:scale-95">
-                    Ingresar
+                    Ingresar por PIN
                 </button>
             </form>
-            <p id="pin-error" class="text-xs text-rose-400 hidden">PIN de acceso incorrecto. Inténtalo de nuevo.</p>
+
+            <p id="auth-error" class="text-xs text-rose-400 text-center hidden"></p>
         </div>
     </div>
 
@@ -84,11 +167,13 @@
         <!-- Header -->
         <header class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-teal-500/20">
-                    <i class="fa-solid fa-wallet text-slate-950 text-xl"></i>
+                <div id="user-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-teal-500/20 overflow-hidden">
+                    <i class="fa-solid fa-user text-slate-950 text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-white tracking-tight">Finanzas Diarias</h1>
+                    <h1 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span id="header-user-name">Finanzas Personales</span>
+                    </h1>
                     <p class="text-xs text-slate-400">Control de presupuesto & reportes mensuales</p>
                 </div>
             </div>
@@ -103,12 +188,11 @@
                 </button>
                 <button onclick="handleResetDatabase()" title="Reiniciar datos a cero" class="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition-colors text-sm flex items-center gap-1.5 font-semibold">
                     <i class="fa-solid fa-trash-can text-rose-400"></i>
-                    <span class="hidden md:inline">Reiniciar a Cero</span>
+                    <span class="hidden md:inline">Reiniciar</span>
                 </button>
-                <button onclick="logoutPIN()" title="Bloquear App" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors text-sm">
+                <button onclick="logoutAuth()" title="Cerrar Sesión" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors text-sm">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
-
             </div>
         </header>
 
@@ -154,7 +238,6 @@
                 </p>
             </div>
         </div>
-
 
         <!-- Alerta de Supervivencia Financiera (Humor Negro) -->
         <div id="funny-alert-box" class="glass-card rounded-2xl p-4 border-l-4 border-emerald-500 flex items-center gap-3 transition-all duration-300 shadow-lg">
@@ -203,7 +286,7 @@
                 <i class="fa-solid fa-bolt text-amber-400"></i> Acciones Rápidas (1-Clic)
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button onclick="quickExpense('Colectivo Talca', 1000, 'CuentaRUT', 'Transporte Talca (Colectivo / Uber Trabajo)')" 
+                <button onclick="quickExpense('Colectivo Talca', 1000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
                     class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-teal-500 shadow-sm active:scale-95">
                     <div>
                         <div class="font-semibold text-sm text-slate-200 group-hover:text-teal-400">Colectivo Talca</div>
@@ -212,7 +295,7 @@
                     <span class="text-sm font-bold text-rose-400">-$1.000</span>
                 </button>
 
-                <button onclick="quickExpense('Uber Trabajo', 4000, 'CuentaRUT', 'Transporte Talca (Colectivo / Uber Trabajo)')" 
+                <button onclick="quickExpense('Uber Trabajo', 4000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
                     class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-indigo-500 shadow-sm active:scale-95">
                     <div>
                         <div class="font-semibold text-sm text-slate-200 group-hover:text-indigo-400">Uber</div>
@@ -221,7 +304,7 @@
                     <span class="text-sm font-bold text-rose-400">-$4.000</span>
                 </button>
 
-                <button onclick="quickExpense('Bus Talca-Linares', 4000, 'CuentaRUT', 'Transporte Interurbano (Bus Talca-Linares)')" 
+                <button onclick="quickExpense('Bus Talca-Linares', 4000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
                     class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-purple-500 shadow-sm active:scale-95">
                     <div>
                         <div class="font-semibold text-sm text-slate-200 group-hover:text-purple-400">Bus Linares</div>
@@ -255,7 +338,6 @@
                 <!-- Se llena dinámicamente -->
             </div>
         </section>
-
 
         <!-- Presupuestos por Categoría -->
         <section class="space-y-3">
@@ -358,7 +440,6 @@
                     <input type="number" id="inc-amount" required min="1" step="any" placeholder="Ej: 541091"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
                 </div>
-
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">¿A qué cuenta fue ingresado?</label>
@@ -520,6 +601,8 @@
     <script>
         let cachedAccounts = [];
         let cachedCategories = [];
+        let currentUser = null;
+        let authUserId = localStorage.getItem('app_user_id') || '';
         let currentPIN = localStorage.getItem('app_pin') || '';
         let expenseChartInstance = null;
 
@@ -559,10 +642,14 @@
         ];
 
         function getAuthHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'x-app-pin': currentPIN
-            };
+            const headers = { 'Content-Type': 'application/json' };
+            if (authUserId) {
+                headers['Authorization'] = `Bearer ${authUserId}`;
+                headers['x-app-user-id'] = authUserId;
+            } else if (currentPIN) {
+                headers['x-app-pin'] = currentPIN;
+            }
+            return headers;
         }
 
         function formatCLP(amount) {
@@ -577,20 +664,147 @@
             toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i> <span>${message}</span>`;
             container.appendChild(toast);
 
-            setTimeout(() => {
-                toast.classList.remove('opacity-0', 'translate-y-2');
-            }, 10);
-
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
+        function switchAuthTab(tab) {
+            document.getElementById('form-email-login').classList.add('hidden');
+            document.getElementById('form-email-register').classList.add('hidden');
+            document.getElementById('form-pin-login').classList.add('hidden');
+
+            document.getElementById('tab-login-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+            document.getElementById('tab-register-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+            document.getElementById('tab-pin-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+
+            if (tab === 'login') {
+                document.getElementById('form-email-login').classList.remove('hidden');
+                document.getElementById('tab-login-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all";
+            } else if (tab === 'register') {
+                document.getElementById('form-email-register').classList.remove('hidden');
+                document.getElementById('tab-register-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-emerald-600 text-white transition-all";
+            } else if (tab === 'pin') {
+                document.getElementById('form-pin-login').classList.remove('hidden');
+                document.getElementById('tab-pin-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all";
+            }
+        }
+
+        async function handleRegisterSubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const errorMsg = document.getElementById('auth-error');
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    authUserId = data.access_token;
+                    localStorage.setItem('app_user_id', authUserId);
+                    currentUser = data.user;
+                    updateUserHeaderUI(data.user);
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    refreshData();
+                } else {
+                    const err = await res.json();
+                    errorMsg.innerText = err.detail || 'Error al crear la cuenta';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        async function handleEmailLoginSubmit(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorMsg = document.getElementById('auth-error');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    authUserId = data.access_token;
+                    localStorage.setItem('app_user_id', authUserId);
+                    currentUser = data.user;
+                    updateUserHeaderUI(data.user);
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    refreshData();
+                } else {
+                    const err = await res.json();
+                    errorMsg.innerText = err.detail || 'Credenciales incorrectas';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        async function handleGoogleCredentialResponse(response) {
+            const credential = response.credential;
+            const errorMsg = document.getElementById('auth-error');
+
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    authUserId = data.access_token;
+                    localStorage.setItem('app_user_id', authUserId);
+                    currentUser = data.user;
+                    updateUserHeaderUI(data.user);
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    refreshData();
+                } else {
+                    const err = await res.json();
+                    errorMsg.innerText = err.detail || 'Error al autenticar con Google';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Error al conectar con Google.';
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        function promptGoogleSignIn() {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.prompt();
+            } else {
+                showToast('Inicio de sesión con Google listo. Usa el diálogo de Google.', 'success');
+            }
+        }
+
         async function handlePinLogin(event) {
             event.preventDefault();
             const pinInput = document.getElementById('input-pin').value;
-            const errorMsg = document.getElementById('pin-error');
+            const errorMsg = document.getElementById('auth-error');
 
             try {
                 const response = await fetch('/api/verify-pin', {
@@ -600,13 +814,18 @@
                 });
 
                 if (response.ok) {
+                    const data = await response.json();
                     currentPIN = pinInput;
+                    authUserId = str(data.user_id || '');
                     localStorage.setItem('app_pin', currentPIN);
-                    document.getElementById('pin-lockscreen').classList.add('hidden');
+                    localStorage.setItem('app_user_id', authUserId);
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
                     document.getElementById('app-content').classList.remove('hidden');
                     errorMsg.classList.add('hidden');
+                    document.getElementById('header-user-name').innerText = data.name || 'Omar';
                     refreshData();
                 } else {
+                    errorMsg.innerText = 'PIN de acceso incorrecto.';
                     errorMsg.classList.remove('hidden');
                     document.getElementById('input-pin').value = '';
                 }
@@ -616,17 +835,35 @@
             }
         }
 
-        function logoutPIN() {
+        function updateUserHeaderUI(user) {
+            if (!user) return;
+            const nameEl = document.getElementById('header-user-name');
+            const avatarEl = document.getElementById('user-avatar');
+
+            if (nameEl) nameEl.innerText = user.name || 'Usuario';
+            if (avatarEl) {
+                if (user.picture) {
+                    avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name}" class="w-full h-full object-cover rounded-xl">`;
+                } else {
+                    const initial = (user.name || 'U').charAt(0).toUpperCase();
+                    avatarEl.innerHTML = `<span class="text-slate-950 font-bold text-lg">${initial}</span>`;
+                }
+            }
+        }
+
+        function logoutAuth() {
+            localStorage.removeItem('app_user_id');
             localStorage.removeItem('app_pin');
+            authUserId = '';
             currentPIN = '';
+            currentUser = null;
             document.getElementById('app-content').classList.add('hidden');
-            document.getElementById('pin-lockscreen').classList.remove('hidden');
-            document.getElementById('input-pin').value = '';
+            document.getElementById('auth-lockscreen').classList.remove('hidden');
         }
 
         async function checkInitialAuth() {
-            if (!currentPIN) {
-                document.getElementById('pin-lockscreen').classList.remove('hidden');
+            if (!authUserId && !currentPIN) {
+                document.getElementById('auth-lockscreen').classList.remove('hidden');
                 document.getElementById('app-content').classList.add('hidden');
                 return;
             }
@@ -634,10 +871,16 @@
             try {
                 const res = await fetch('/dashboard', { headers: getAuthHeaders() });
                 if (res.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else if (res.ok) {
-                    document.getElementById('pin-lockscreen').classList.add('hidden');
+                    document.getElementById('auth-lockscreen').classList.add('hidden');
                     document.getElementById('app-content').classList.remove('hidden');
+                    
+                    // Obtener perfil del usuario
+                    fetch('/api/auth/me', { headers: getAuthHeaders() })
+                        .then(r => r.ok ? r.json() : null)
+                        .then(u => { if (u) updateUserHeaderUI(u); });
+
                     refreshData();
                 }
             } catch (err) {
@@ -746,7 +989,7 @@
         async function fetchDashboard() {
             try {
                 const res = await fetch('/dashboard', { headers: getAuthHeaders() });
-                if (res.status === 401) { logoutPIN(); return; }
+                if (res.status === 401) { logoutAuth(); return; }
                 const data = await res.json();
 
                 // Formatear Saldo Total y Reservas
@@ -755,7 +998,6 @@
                 document.getElementById('days-remaining').innerText = `${data.days_remaining_in_month} días restantes`;
                 document.getElementById('committed-expenses').innerText = formatCLP(data.committed_expenses || 0);
                 document.getElementById('free-balance').innerText = formatCLP(data.free_balance || 0);
-
 
                 // Render Cuentas
                 cachedAccounts = data.accounts;
@@ -790,7 +1032,7 @@
                     const data = await response.json();
                     renderMonthlyReport(data);
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 }
             } catch (err) {
                 console.error("Error al cargar reporte mensual:", err);
@@ -885,7 +1127,6 @@
             }).join('');
         }
 
-
         function renderCategories(categories) {
             const list = document.getElementById('categories-list');
             list.innerHTML = categories.map(cat => {
@@ -976,7 +1217,7 @@
                     showToast('Transacción eliminada y saldo revertido');
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al eliminar transacción', 'error');
@@ -1027,13 +1268,26 @@
                     showToast(`Gasto registrado: ${name} (-${formatCLP(amount)})`);
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al procesar gasto', 'error');
                 }
             } catch (err) {
                 showToast('Error de conexión', 'error');
+            }
+        }
+
+        function presetIncome(amount, note) {
+            if (amount !== undefined && amount !== '') {
+                document.getElementById('inc-amount').value = amount;
+            } else {
+                document.getElementById('inc-amount').value = '';
+            }
+            if (note) {
+                document.getElementById('inc-note').value = note;
+            } else {
+                document.getElementById('inc-note').value = '';
             }
         }
 
@@ -1057,7 +1311,7 @@
                     document.getElementById('expense-form').reset();
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al guardar gasto', 'error');
@@ -1067,21 +1321,7 @@
             }
         }
 
-        function presetIncome(amount, note) {
-            if (amount !== undefined && amount !== '') {
-                document.getElementById('inc-amount').value = amount;
-            } else {
-                document.getElementById('inc-amount').value = '';
-            }
-            if (note) {
-                document.getElementById('inc-note').value = note;
-            } else {
-                document.getElementById('inc-note').value = '';
-            }
-        }
-
         async function handleIncomeSubmit(event) {
-
             event.preventDefault();
             const amount = parseFloat(document.getElementById('inc-amount').value);
             const account_id = parseInt(document.getElementById('inc-account').value);
@@ -1100,7 +1340,7 @@
                     document.getElementById('income-form').reset();
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al registrar ingreso', 'error');
@@ -1130,7 +1370,7 @@
                     document.getElementById('transfer-form').reset();
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al realizar traspaso', 'error');
@@ -1141,7 +1381,7 @@
         }
 
         async function handleResetDatabase() {
-            if (!confirm('⚠️ ¿Estás seguro de reiniciar todas las transacciones y volver los saldos a cero para empezar el nuevo mes?')) {
+            if (!confirm('⚠️ ¿Estás seguro de reiniciar todas las transacciones de este mes y volver los saldos a cero para empezar el nuevo mes?')) {
                 return;
             }
 
@@ -1155,7 +1395,7 @@
                     showToast('Base de datos reiniciada con éxito. Listo para empezar de cero.');
                     refreshData();
                 } else if (response.status === 401) {
-                    logoutPIN();
+                    logoutAuth();
                 } else {
                     const err = await response.json();
                     showToast(err.detail || 'Error al reiniciar base de datos', 'error');
@@ -1166,7 +1406,6 @@
         }
 
         function openModal(id) {
-
             document.getElementById(id).classList.remove('hidden');
         }
 

@@ -1,6 +1,34 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+
+# Esquemas de Usuario & Autenticación
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=2, description="Nombre del usuario")
+    email: str = Field(..., description="Correo electrónico único")
+    password: str = Field(..., min_length=4, description="Contraseña del usuario")
+
+class UserLogin(BaseModel):
+    email: str = Field(..., description="Correo electrónico")
+    password: str = Field(..., description="Contraseña")
+
+class GoogleAuth(BaseModel):
+    credential: str = Field(..., description="JWT Credential de Google Sign-In")
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    picture: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
 
 # Esquemas de Cuenta
 class AccountBase(BaseModel):
@@ -76,8 +104,9 @@ class DashboardSummary(BaseModel):
     categories_summary: List[CategorySpent]
     daily_hormiga_limit: float
     days_remaining_in_month: int
+    committed_expenses: float = 0.0
+    free_balance: float = 0.0
 
 
 class PinLogin(BaseModel):
     pin: str
-
