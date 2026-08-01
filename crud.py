@@ -202,9 +202,10 @@ def get_dashboard_summary(db: Session):
         })
 
     # 3. Límite diario disponible para gastos hormiga
-    # Se consideran las cuentas operativas y líquidas: CuentaRUT y Mercado Pago Disponible
-    liquid_accounts = [acc for acc in accounts if acc.name in ["CuentaRUT", "Mercado Pago Disponible"]]
+    # Se consideran las cuentas operativas y líquidas: CuentaRUT, Mercado Pago Disponible y Efectivo (Billetera)
+    liquid_accounts = [acc for acc in accounts if acc.name in ["CuentaRUT", "Mercado Pago Disponible", "Efectivo (Billetera)"]]
     liquid_balance = sum(max(0.0, acc.balance) for acc in liquid_accounts)
+
 
     daily_hormiga_limit = round(liquid_balance / days_remaining, 0)
 
