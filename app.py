@@ -18,28 +18,28 @@ from sqlalchemy import text
 
 def run_auto_migrations():
     Base.metadata.create_all(bind=engine)
-    with engine.connect() as conn:
-        for table in ["account", "category", "transaction"]:
-            try:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER;"))
-                conn.commit()
-            except Exception:
-                pass
-
-        for col, col_type in [("is_admin", "BOOLEAN DEFAULT FALSE"), ("monthly_income", "FLOAT DEFAULT 0.0"), ("onboarding_completed", "BOOLEAN DEFAULT FALSE"), ("quick_buttons_json", "VARCHAR")]:
-            try:
-                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type};"))
-                conn.commit()
-            except Exception:
-                pass
-
+    
+    for table in ["account", "category", "transaction"]:
         try:
-            conn.execute(text("UPDATE account SET user_id = 1 WHERE user_id IS NULL;"))
-            conn.execute(text("UPDATE category SET user_id = 1 WHERE user_id IS NULL;"))
-            conn.execute(text("UPDATE transaction SET user_id = 1 WHERE user_id IS NULL;"))
-            conn.commit()
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER;"))
         except Exception:
             pass
+
+    for col, col_type in [("is_admin", "BOOLEAN DEFAULT FALSE"), ("monthly_income", "FLOAT DEFAULT 0.0"), ("onboarding_completed", "BOOLEAN DEFAULT FALSE"), ("quick_buttons_json", "VARCHAR")]:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type};"))
+        except Exception:
+            pass
+
+    for table in ["account", "category", "transaction"]:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"UPDATE {table} SET user_id = 1 WHERE user_id IS NULL;"))
+        except Exception:
+            pass
+
 
 
 try:
