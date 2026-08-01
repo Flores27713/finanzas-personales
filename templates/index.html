@@ -941,7 +941,8 @@
                 }
             }
 
-            if (user.onboarding_completed === false && !user.is_admin) {
+            if (user.onboarding_completed === false && !user.is_admin && !sessionStorage.getItem('onboarding_shown')) {
+                sessionStorage.setItem('onboarding_shown', 'true');
                 openModal('onboarding-modal');
             }
 
@@ -953,12 +954,14 @@
         function logoutAuth() {
             localStorage.removeItem('app_user_id');
             localStorage.removeItem('app_pin');
+            sessionStorage.removeItem('onboarding_shown');
             authUserId = '';
             currentPIN = '';
             currentUser = null;
             document.getElementById('app-content').classList.add('hidden');
             document.getElementById('auth-lockscreen').classList.remove('hidden');
         }
+
 
         async function checkInitialAuth() {
             if (!authUserId && !currentPIN) {
@@ -1661,21 +1664,21 @@
 
                     container.innerHTML = users.map(u => {
                         const dateStr = new Date(u.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        const isAdminBadge = u.is_admin ? '<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">ADMIN</span>' : '';
-                        const deleteBtn = u.is_admin ? '' : `<button onclick="deleteUserAdmin(${u.id}, '${u.email}')" class="px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 font-semibold text-xs transition-all"><i class="fa-solid fa-trash-can mr-1"></i> Borrar</button>`;
+                        const isAdminBadge = u.is_admin ? '<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[10px]">ADMIN</span>' : '';
+                        const deleteBtn = u.is_admin ? '' : `<button onclick="deleteUserAdmin(${u.id}, '${u.email}')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-all active:scale-95"><i class="fa-solid fa-trash-can mr-1"></i> Borrar</button>`;
 
                         return `
-                            <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3">
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between gap-3 text-xs">
                                 <div class="space-y-1">
                                     <div class="flex items-center gap-2">
-                                        <strong class="text-white text-sm">${u.name}</strong>
+                                        <strong class="text-slate-800 text-sm font-bold">${u.name}</strong>
                                         ${isAdminBadge}
                                     </div>
-                                    <p class="text-xs text-slate-400 font-mono">${u.email}</p>
-                                    <div class="text-[11px] text-slate-500 flex gap-3">
-                                        <span><i class="fa-regular fa-clock mr-1"></i> Registrado: ${dateStr}</span>
-                                        <span><i class="fa-solid fa-wallet mr-1"></i> Cuentas: ${u.account_count}</span>
-                                        <span><i class="fa-solid fa-receipt mr-1"></i> Transacciones: ${u.transaction_count}</span>
+                                    <p class="text-xs text-slate-500 font-mono">${u.email}</p>
+                                    <div class="text-[11px] text-slate-400 flex gap-3">
+                                        <span><i class="fa-regular fa-clock mr-1 text-slate-400"></i> Registrado: ${dateStr}</span>
+                                        <span><i class="fa-solid fa-wallet mr-1 text-indigo-500"></i> Cuentas: ${u.account_count}</span>
+                                        <span><i class="fa-solid fa-receipt mr-1 text-emerald-500"></i> Transacciones: ${u.transaction_count}</span>
                                     </div>
                                 </div>
                                 <div>
@@ -1684,6 +1687,7 @@
                             </div>
                         `;
                     }).join('');
+
                 } else {
                     container.innerHTML = '<p class="text-xs text-rose-400 text-center py-4">Error al cargar usuarios de administración.</p>';
                 }
