@@ -10,20 +10,16 @@ INITIAL_ACCOUNTS = [
 
 INITIAL_CATEGORIES = [
     {"name": "Arriendo (Fijo)", "monthly_budget": 170000.0},
-    {"name": "Cuentas Básicas (Luz / Agua / Internet)", "monthly_budget": 40000.0},
-    {"name": "Transporte Talca (Colectivo / Uber Trabajo)", "monthly_budget": 35000.0},
-    {"name": "Transporte Interurbano (Bus Talca-Linares)", "monthly_budget": 40000.0},
-    {"name": "Transporte Local Linares (Uber / Colectivos)", "monthly_budget": 20000.0},
+    {"name": "Transporte (Colectivo / Uber / Bus Interurbano)", "monthly_budget": 60000.0},
     {"name": "Alimentación y Aseo (Feria / Mercado)", "monthly_budget": 80000.0},
     {"name": "Ocio y Citas (Salidas)", "monthly_budget": 30000.0},
-    {"name": "Deudas / Compromisos", "monthly_budget": 50000.0},
+    {"name": "Deudas y Compromisos", "monthly_budget": 50000.0},
     {"name": "Fondo Ahorro / Máster", "monthly_budget": 150000.0},
 ]
 
 def seed_database(db: Session):
     """
-    Precarga las cuentas y categorías iniciales si no existen en la base de datos.
-    Ajusta el arriendo a $170.000 CLP exactos (que ya incluye gastos comunes).
+    Precarga las cuentas y categorías iniciales sin cuentas básicas.
     """
     for acc in INITIAL_ACCOUNTS:
         existing = db.query(models.Account).filter(models.Account.name == acc["name"]).first()
