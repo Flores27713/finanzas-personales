@@ -2,9 +2,9 @@ from sqlalchemy.orm import Session
 import models
 
 INITIAL_ACCOUNTS = [
-    {"name": "CuentaRUT", "balance": 120000.0},
-    {"name": "Mercado Pago Disponible", "balance": 70000.0},
-    {"name": "Mercado Pago Ahorro", "balance": 150000.0},
+    {"name": "CuentaRUT", "balance": 0.0},
+    {"name": "Mercado Pago Disponible", "balance": 0.0},
+    {"name": "Mercado Pago Ahorro", "balance": 0.0},
     {"name": "Efectivo (Billetera)", "balance": 0.0},
 ]
 
@@ -19,7 +19,7 @@ INITIAL_CATEGORIES = [
 
 def seed_database(db: Session):
     """
-    Precarga las cuentas y categorías iniciales sin cuentas básicas.
+    Precarga las cuentas y categorías iniciales en $0 completas para seguimiento desde cero.
     """
     for acc in INITIAL_ACCOUNTS:
         existing = db.query(models.Account).filter(models.Account.name == acc["name"]).first()
