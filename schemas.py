@@ -43,6 +43,17 @@ class OnboardingRequest(BaseModel):
     categories_budget: Optional[dict] = Field(default_factory=dict, description="Presupuestos por categoría")
     quick_buttons: Optional[List[dict]] = Field(default_factory=list, description="Lista de botones rápidos")
 
+class QuickButtonCreate(BaseModel):
+    name: str = Field(..., description="Nombre del atajo")
+    amount: float = Field(..., ge=0.0, description="Monto del atajo")
+    account_name: str = Field(default="CuentaRUT", description="Nombre de la cuenta por defecto")
+    category_name: Optional[str] = Field(None, description="Nombre de la categoría")
+    color_border: Optional[str] = Field("border-teal-500", description="Color del borde")
+
+class QuickButtonsUpdate(BaseModel):
+    quick_buttons: List[QuickButtonCreate]
+
+
 
 
 # Esquemas de Cuenta

@@ -156,6 +156,17 @@ def complete_onboarding(db: Session, user_id: int, data: schemas.OnboardingReque
     db.refresh(user)
     return user
 
+def update_user_quick_buttons(db: Session, user_id: int, buttons: list):
+    user = get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    user.quick_buttons_json = json.dumps(buttons)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 
 
 # ==========================================

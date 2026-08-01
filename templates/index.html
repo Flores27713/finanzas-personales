@@ -285,40 +285,21 @@
             </div>
         </section>
 
-        <!-- Acciones Rápidas (1-Clic) -->
+        <!-- Acciones Rápidas (1-Clic Dinámicas por Usuario) -->
         <section class="space-y-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <i class="fa-solid fa-bolt text-amber-400"></i> Acciones Rápidas (1-Clic)
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button onclick="quickExpense('Colectivo Talca', 1000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
-                    class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-teal-500 shadow-sm active:scale-95">
-                    <div>
-                        <div class="font-semibold text-sm text-slate-200 group-hover:text-teal-400">Colectivo Talca</div>
-                        <div class="text-xs text-slate-400 mt-0.5">CuentaRUT</div>
-                    </div>
-                    <span class="text-sm font-bold text-rose-400">-$1.000</span>
-                </button>
-
-                <button onclick="quickExpense('Uber Trabajo', 4000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
-                    class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-indigo-500 shadow-sm active:scale-95">
-                    <div>
-                        <div class="font-semibold text-sm text-slate-200 group-hover:text-indigo-400">Uber</div>
-                        <div class="text-xs text-slate-400 mt-0.5">CuentaRUT</div>
-                    </div>
-                    <span class="text-sm font-bold text-rose-400">-$4.000</span>
-                </button>
-
-                <button onclick="quickExpense('Bus Talca-Linares', 4000, 'CuentaRUT', 'Transporte (Colectivo / Uber / Bus Interurbano)')" 
-                    class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 border-purple-500 shadow-sm active:scale-95">
-                    <div>
-                        <div class="font-semibold text-sm text-slate-200 group-hover:text-purple-400">Bus Linares</div>
-                        <div class="text-xs text-slate-400 mt-0.5">CuentaRUT</div>
-                    </div>
-                    <span class="text-sm font-bold text-rose-400">-$4.000</span>
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> Acciones Rápidas (1-Clic)
+                </h2>
+                <button onclick="openQuickButtonsModal()" class="text-xs text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20">
+                    <i class="fa-solid fa-pen-to-square"></i> Personalizar Atajos
                 </button>
             </div>
+            <div id="quick-actions-container" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Llenado dinámico por usuario -->
+            </div>
         </section>
+
 
         <!-- Botones de Gestión (Gasto, Ingreso DJ & Transferencia) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -911,7 +892,10 @@
             if (user.onboarding_completed === false && !user.is_admin) {
                 openModal('onboarding-modal');
             }
+
+            renderQuickActions(user);
         }
+
 
 
         function logoutAuth() {
@@ -1580,6 +1564,127 @@
             }
         }
 
+        function renderQuickActions(user) {
+            const container = document.getElementById('quick-actions-container');
+            if (!container) return;
+
+            let buttons = [];
+            if (user && user.quick_buttons_json) {
+                try {
+                    buttons = JSON.parse(user.quick_buttons_json);
+                } catch (e) {}
+            }
+
+            if (buttons.length === 0 && (user && (user.is_admin || user.email === 'omar@finanzas.local'))) {
+                buttons = [
+                    { name: 'Colectivo Talca', amount: 1000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-teal-500' },
+                    { name: 'Uber Trabajo', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-indigo-500' },
+                    { name: 'Bus Talca-Linares', amount: 4000, account_name: 'CuentaRUT', category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)', color_border: 'border-purple-500' }
+                ];
+            }
+
+            if (buttons.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-4 rounded-2xl bg-slate-900/60 border border-slate-800 border-dashed text-center space-y-2">
+                        <p class="text-xs text-slate-400">Aún no tienes atajos de 1-Clic personalizados.</p>
+                        <button onclick="openQuickButtonsModal()" class="px-4 py-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold hover:bg-teal-500/30 transition-all">
+                            <i class="fa-solid fa-plus mr-1"></i> Crear Mis Botones Rápidos
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = buttons.map(b => {
+                const borderClass = b.color_border || 'border-teal-500';
+                return `
+                    <button onclick="quickExpense('${b.name}', ${b.amount}, '${b.account_name}', '${b.category_name || ''}')" 
+                        class="glass-card p-4 rounded-xl hover:bg-slate-800/80 transition-all text-left group flex items-center justify-between border-l-4 ${borderClass} shadow-sm active:scale-95">
+                        <div>
+                            <div class="font-semibold text-sm text-slate-200 group-hover:text-teal-400">${b.name}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${b.account_name}</div>
+                        </div>
+                        <span class="text-sm font-bold text-rose-400">-${formatCLP(b.amount)}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function openQuickButtonsModal() {
+            const list = document.getElementById('quick-buttons-inputs-list');
+            if (!list) return;
+
+            let buttons = [];
+            if (currentUser && currentUser.quick_buttons_json) {
+                try { buttons = JSON.parse(currentUser.quick_buttons_json); } catch (e) {}
+            }
+
+            if (buttons.length === 0) {
+                buttons = [
+                    { name: 'Gasto Rápido 1', amount: 1000, account_name: 'CuentaRUT' }
+                ];
+            }
+
+            list.innerHTML = '';
+            buttons.forEach(b => addQuickButtonInputRow(b.name, b.amount, b.account_name));
+            openModal('quick-buttons-modal');
+        }
+
+        function addQuickButtonInputRow(name = '', amount = '', account = 'CuentaRUT') {
+            const list = document.getElementById('quick-buttons-inputs-list');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-xs qb-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Nombre (ej: Uber)" value="${name}" required class="col-span-5 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-semibold qb-name">
+                <input type="number" placeholder="Monto" value="${amount}" required min="0" class="col-span-4 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-bold qb-amount">
+                <button type="button" onclick="this.closest('.qb-row').remove()" class="col-span-3 text-rose-400 hover:text-rose-300 font-semibold text-center"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
+            `;
+            list.appendChild(row);
+        }
+
+        async function handleSaveQuickButtons(event) {
+            event.preventDefault();
+            const rows = document.querySelectorAll('.qb-row');
+            const buttons = [];
+            const colors = ['border-teal-500', 'border-indigo-500', 'border-purple-500', 'border-emerald-500', 'border-amber-500'];
+
+            rows.forEach((r, idx) => {
+                const name = r.querySelector('.qb-name').value.trim();
+                const amount = parseFloat(r.querySelector('.qb-amount').value);
+                if (name && !isNaN(amount)) {
+                    buttons.push({
+                        name: name,
+                        amount: amount,
+                        account_name: 'CuentaRUT',
+                        category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)',
+                        color_border: colors[idx % colors.length]
+                    });
+                }
+            });
+
+            try {
+                const response = await fetch('/api/user/quick-buttons', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ quick_buttons: buttons })
+                });
+
+                if (response.ok) {
+                    showToast('Atajos personalizados guardados');
+                    closeModal('quick-buttons-modal');
+                    if (currentUser) {
+                        currentUser.quick_buttons_json = JSON.stringify(buttons);
+                        renderQuickActions(currentUser);
+                    }
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Error al guardar atajos', 'error');
+                }
+            } catch (err) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+
         function openModal(id) {
             document.getElementById(id).classList.remove('hidden');
         }
@@ -1602,6 +1707,7 @@
             checkInitialAuth();
         });
     </script>
+
 
     <!-- Modal Panel de Administrador -->
     <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
@@ -1674,7 +1780,39 @@
                 </div>
             </form>
         </div>
+    <!-- Modal Personalizar Atajos Rápidos -->
+    <div id="quick-buttons-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-5 border border-teal-500/30 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> Personalizar Atajos Rápidos
+                </h3>
+                <button onclick="closeModal('quick-buttons-modal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="quick-buttons-form" onsubmit="handleSaveQuickButtons(event)" class="space-y-4">
+                <div class="space-y-3" id="quick-buttons-inputs-list">
+                    <!-- Lista editable -->
+                </div>
+
+                <button type="button" onclick="addQuickButtonInputRow()" class="w-full py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-slate-300 font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus text-teal-400"></i> Agregar Otro Botón
+                </button>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('quick-buttons-modal')" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-xs">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
+                        Guardar Atajos 🚀
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 </html>
+
 

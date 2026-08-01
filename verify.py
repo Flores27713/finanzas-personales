@@ -159,11 +159,22 @@ def test_system():
     assert userB_updated["monthly_income"] == 500000.0
     print("[OK] Onboarding inicial completado exitosamente para Usuario B")
 
-    # 12. Probar Borrado de Usuario B desde el Panel de Admin
+    # 12. Probar Personalización de Atajos Rápidos (POST /api/user/quick-buttons)
+    qb_resp = client.post("/api/user/quick-buttons", json={
+        "quick_buttons": [
+            {"name": "Supermercado", "amount": 25000.0, "account_name": "CuentaRUT"},
+            {"name": "Bencina", "amount": 15000.0, "account_name": "CuentaRUT"}
+        ]
+    }, headers=headersB)
+    assert qb_resp.status_code == 200, f"Error al guardar atajos: {qb_resp.text}"
+    print("[OK] Atajos de 1-Clic personalizados correctamente por el usuario")
+
+    # 13. Probar Borrado de Usuario B desde el Panel de Admin
     userB_id = userB_data["user"]["id"]
     del_resp = client.delete(f"/api/admin/users/{userB_id}", headers=headers)
     assert del_resp.status_code == 200, f"Error al eliminar usuario B: {del_resp.text}"
     print(f"[OK] Usuario B (ID #{userB_id}) eliminado limpiamente desde el Panel de Administración")
+
 
     print("--- TODAS LAS PRUEBAS DE SEGURIDAD E INTEGRIDAD PASARON CON EXITO ---")
 

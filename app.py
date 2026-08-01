@@ -163,6 +163,12 @@ def delete_user_admin(target_id: int, db: Session = Depends(get_db), current_use
 def complete_onboarding(data: schemas.OnboardingRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return crud.complete_onboarding(db, current_user.id, data)
 
+@app.post("/api/user/quick-buttons")
+def update_quick_buttons(data: schemas.QuickButtonsUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    buttons = [b.model_dump() for b in data.quick_buttons]
+    return crud.update_user_quick_buttons(db, current_user.id, buttons)
+
+
 
 
 
