@@ -1288,8 +1288,9 @@
                     showToast(`🎉 ¡Cuenta "${name}" agregada con éxito!`);
                     closeModal('add-account-modal');
                     document.getElementById('add-account-form').reset();
-                    refreshData();
+                    await refreshData();
                 } else {
+
                     const err = await response.json();
                     showToast(err.detail || 'Error al agregar cuenta', 'error');
                 }
@@ -1911,6 +1912,7 @@
 
 
         function openModal(id) {
+            populateSelects();
             document.getElementById(id).classList.remove('hidden');
         }
 
@@ -1924,8 +1926,20 @@
             await fetchCategories();
             await fetchDashboard();
             await fetchTransactions();
+
+            // Sincronizar datos del usuario actual (Header y Atajos de 1-Clic)
+            try {
+                const resMe = await fetch('/api/auth/me', { headers: getAuthHeaders() });
+                if (resMe.ok) {
+                    const u = await resMe.json();
+                    updateUserHeaderUI(u);
+                }
+            } catch (e) {}
+
+            populateSelects();
             if (icon) setTimeout(() => icon.classList.remove('fa-spin'), 400);
         }
+
 
         // Inicializar al cargar
         window.addEventListener('DOMContentLoaded', () => {
