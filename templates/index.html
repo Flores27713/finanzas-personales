@@ -12,14 +12,26 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0fdfa',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            900: '#134e4a',
+                        soft: {
+                            lilac: '#e9d5ff',
+                            blush: '#fbcfe8',
+                            rose: '#fda4af',
+                            slate: '#94a3b8',
+                            ivory: '#fefae0',
+                            cream: '#fef08a',
+                            taupe: '#d5bdaf',
+                            teal: '#38bdf8',
+                            petrol: '#2b6a78',
+                            gold: '#d4a373',
+                            navy: '#0f172a',
+                            rosewood: '#a8828b'
                         },
-                        darkbg: '#0f172a',
-                        cardbg: '#1e293b',
+                        brand: {
+                            50: '#fdf8f6',
+                            500: '#d4a373',
+                            600: '#2b6a78',
+                            900: '#0f172a',
+                        }
                     }
                 }
             }
@@ -38,20 +50,28 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0b0f19;
+            background: radial-gradient(circle at top center, #1b1638 0%, #090d16 65%, #050810 100%);
+            background-attachment: fixed;
         }
         .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 163, 115, 0.18);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .glass-card-hover:hover {
+            border-color: rgba(212, 163, 115, 0.35);
+            box-shadow: 0 15px 35px -10px rgba(212, 163, 115, 0.15);
         }
         .glass-modal {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(16px);
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 163, 115, 0.25);
         }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen pb-12">
+
 
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -1154,32 +1174,48 @@
             const list = document.getElementById('accounts-list');
             if (!list) return;
 
+            if (!accounts || accounts.length === 0) {
+                list.innerHTML = `
+                    <div class="col-span-full p-6 rounded-3xl bg-slate-900/80 border border-[#d4a373]/30 border-dashed text-center space-y-3 shadow-xl">
+                        <div class="w-12 h-12 rounded-2xl bg-[#d4a373]/10 border border-[#d4a373]/30 flex items-center justify-center mx-auto text-[#d4a373] text-xl shadow-lg">
+                            <i class="fa-solid fa-building-columns"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-white">¡No tienes bancos ni tarjetas registradas aún!</h3>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto">Selecciona tu primer banco de Chile (BancoEstado CuentaRUT, Santander, BCI, Banco Falabella o Mercado Pago) para comenzar.</p>
+                        <button onclick="openAddAccountModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#2b6a78] to-[#d4a373] text-white font-extrabold text-xs shadow-lg shadow-[#2b6a78]/20 hover:opacity-90 transition-all active:scale-95">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Agregar Mi Primer Banco
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
             list.innerHTML = accounts.map(acc => {
-                let badgeColor = 'from-slate-900 to-slate-800/90 border-slate-700/80';
-                let icon = 'fa-building-columns text-cyan-400';
-                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
+                let badgeColor = 'from-slate-900 to-[#1e293b] border-[#d4a373]/20';
+                let icon = 'fa-building-columns text-[#38bdf8]';
+                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#2b6a78]/20 text-[#38bdf8] border border-[#2b6a78]/40 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
 
                 const accName = acc.name || '';
                 const bankName = acc.bank_name || '';
 
                 if (accName.includes('CuentaRUT') || bankName.includes('BancoEstado')) {
-                    badgeColor = 'from-blue-950/70 to-slate-900 border-amber-500/40';
-                    icon = 'fa-credit-card text-amber-400';
+                    badgeColor = 'from-[#0f172a] via-[#1e293b] to-[#1e1b4b] border-[#d4a373]/40';
+                    icon = 'fa-credit-card text-[#d4a373]';
                     if (accName.includes('CuentaRUT')) {
-                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">CuentaRUT</span>`;
+                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#d4a373]/20 text-[#fefae0] border border-[#d4a373]/40 text-[10px] font-bold">CuentaRUT</span>`;
                     }
                 } else if (acc.account_type?.includes('Crédito') || accName.includes('Crédito') || accName.includes('CMR')) {
-                    badgeColor = 'from-purple-950/70 to-slate-900 border-purple-500/40 shadow-lg shadow-purple-950/30';
-                    icon = 'fa-credit-card text-purple-400 animate-pulse';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
+                    badgeColor = 'from-[#3b0764]/60 via-[#1e1b4b]/80 to-[#0f172a] border-[#e9d5ff]/40 shadow-lg shadow-[#3b0764]/30';
+                    icon = 'fa-credit-card text-[#e9d5ff] animate-pulse';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#e9d5ff]/20 text-[#fbcfe8] border border-[#e9d5ff]/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
                 } else if (accName.includes('Mercado Pago') || accName.includes('Tenpo') || accName.includes('MACH')) {
-                    badgeColor = 'from-teal-950/70 to-slate-900 border-teal-500/30';
-                    icon = 'fa-wallet text-teal-400';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 border border-teal-500/30 text-[10px] font-bold">Prepago Digital</span>`;
+                    badgeColor = 'from-[#1e4e58]/70 via-[#0f172a] to-[#090d16] border-[#38bdf8]/30';
+                    icon = 'fa-wallet text-[#38bdf8]';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 text-[10px] font-bold">Prepago Digital</span>`;
                 } else if (accName.includes('Efectivo') || accName.includes('Billetera')) {
-                    badgeColor = 'from-emerald-950/70 to-amber-950/40 border-amber-500/30';
-                    icon = 'fa-money-bill-wave text-emerald-400';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">Efectivo</span>`;
+                    badgeColor = 'from-[#432818]/60 via-[#0f172a] to-[#050810] border-[#d5bdaf]/40';
+                    icon = 'fa-money-bill-wave text-[#d5bdaf]';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#d5bdaf]/20 text-[#fefae0] border border-[#d5bdaf]/40 text-[10px] font-bold">Efectivo</span>`;
                 }
 
                 return `
@@ -1189,18 +1225,19 @@
                                 <span class="text-xs font-bold text-white tracking-wide block">${acc.name}</span>
                                 ${typeBadge}
                             </div>
-                            <div class="w-9 h-9 rounded-xl bg-slate-900/80 border border-slate-700 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-center justify-center shrink-0">
                                 <i class="fa-solid ${icon} text-sm"></i>
                             </div>
                         </div>
                         <div>
                             <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Saldo Disponible</span>
-                            <div class="text-xl font-extrabold text-white mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
+                            <div class="text-xl font-extrabold text-[#fefae0] mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
 
         function openAddAccountModal() {
             openModal('add-account-modal');
@@ -1341,16 +1378,22 @@
             const transDestSelect = document.getElementById('trans-dest');
             const incAccSelect = document.getElementById('inc-account');
 
-            const getAccountLabel = (acc) => {
-                let icon = '🏦';
-                if (acc.name.includes('CuentaRUT')) icon = '💳';
-                else if (acc.name.includes('Mercado Pago')) icon = '📱';
-                else if (acc.name.includes('Efectivo') || acc.name.includes('Billetera')) icon = '💵';
-                else if (acc.name.includes('Ahorro')) icon = '🐷';
-                return `${icon} ${acc.name} (Saldo: ${formatCLP(acc.balance)})`;
-            };
+            let accOptions = '';
+            if (!cachedAccounts || cachedAccounts.length === 0) {
+                accOptions = `<option value="" disabled selected>⚠️ Agrega un banco haciendo clic en "+ Agregar Mi Banco"</option>`;
+            } else {
+                const getAccountLabel = (acc) => {
+                    let icon = '🏦';
+                    if (acc.name.includes('CuentaRUT') || acc.account_type?.includes('CuentaRUT')) icon = '💳';
+                    else if (acc.account_type?.includes('Crédito')) icon = '💳';
+                    else if (acc.name.includes('Mercado Pago') || acc.name.includes('Tenpo') || acc.name.includes('MACH')) icon = '📱';
+                    else if (acc.name.includes('Efectivo') || acc.name.includes('Billetera')) icon = '💵';
+                    else if (acc.name.includes('Ahorro')) icon = '🐷';
+                    return `${icon} ${acc.name} (Saldo: ${formatCLP(acc.balance)})`;
+                };
+                accOptions = cachedAccounts.map(acc => `<option value="${acc.id}">${getAccountLabel(acc)}</option>`).join('');
+            }
 
-            const accOptions = cachedAccounts.map(acc => `<option value="${acc.id}">${getAccountLabel(acc)}</option>`).join('');
             if (expAccSelect) expAccSelect.innerHTML = accOptions;
             if (transSourceSelect) transSourceSelect.innerHTML = accOptions;
             if (transDestSelect) transDestSelect.innerHTML = accOptions;
@@ -1358,9 +1401,14 @@
 
             const expCatSelect = document.getElementById('exp-category');
             if (expCatSelect) {
-                expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">🏷️ ${cat.name}</option>`).join('');
+                if (!cachedCategories || cachedCategories.length === 0) {
+                    expCatSelect.innerHTML = `<option value="" disabled selected>Gastos Generales</option>`;
+                } else {
+                    expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">🏷️ ${cat.name}</option>`).join('');
+                }
             }
         }
+
 
 
         async function quickExpense(name, amount, accountName, categoryName) {
@@ -1426,11 +1474,18 @@
             const category_id = parseInt(document.getElementById('exp-category').value);
             const note = document.getElementById('exp-note').value.trim();
 
+            if (isNaN(account_id) || !account_id) {
+                showToast('⚠️ Por favor agrega tu primer banco haciendo clic en "+ Agregar Mi Banco"', 'error');
+                closeModal('expense-modal');
+                openAddAccountModal();
+                return;
+            }
+
             try {
                 const response = await fetch('/transactions/expense', {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ amount, account_id, category_id, note: note || 'Gasto' })
+                    body: JSON.stringify({ amount, account_id, category_id: isNaN(category_id) ? null : category_id, note: note || 'Gasto' })
                 });
 
                 if (response.ok) {
@@ -1455,12 +1510,18 @@
             const account_id = parseInt(document.getElementById('inc-account').value);
             const note = document.getElementById('inc-note').value.trim();
 
+            if (isNaN(account_id) || !account_id) {
+                showToast('⚠️ Por favor agrega tu primer banco haciendo clic en "+ Agregar Mi Banco"', 'error');
+                closeModal('income-modal');
+                openAddAccountModal();
+                return;
+            }
+
             try {
                 const response = await fetch('/transactions/income', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ amount, account_id, note: note || 'Ingreso de Dinero' })
-
                 });
 
                 if (response.ok) {
@@ -1485,6 +1546,14 @@
             const account_id = parseInt(document.getElementById('trans-source').value);
             const destination_account_id = parseInt(document.getElementById('trans-dest').value);
             const note = document.getElementById('trans-note').value.trim();
+
+            if (isNaN(account_id) || !account_id || isNaN(destination_account_id) || !destination_account_id) {
+                showToast('⚠️ Por favor agrega tus cuentas de banco primero', 'error');
+                closeModal('transfer-modal');
+                openAddAccountModal();
+                return;
+            }
+
 
             try {
                 const response = await fetch('/transactions/transfer', {
@@ -1617,6 +1686,7 @@
             const income = parseFloat(document.getElementById('onboard-income').value);
             const arriendo = parseFloat(document.getElementById('onboard-cat-arriendo').value) || 170000;
             const transporte = parseFloat(document.getElementById('onboard-cat-transporte').value) || 60000;
+            const bankVal = (document.getElementById('onboard-bank')?.value || "BancoEstado|CuentaRUT|CuentaRUT BancoEstado").split('|');
 
             const payload = {
                 monthly_income: income,
@@ -1627,6 +1697,19 @@
             };
 
             try {
+                if (!cachedAccounts || cachedAccounts.length === 0) {
+                    await fetch('/api/accounts', {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({
+                            bank_name: bankVal[0],
+                            account_type: bankVal[1],
+                            name: bankVal[2],
+                            balance: 0.0
+                        })
+                    });
+                }
+
                 const response = await fetch('/api/onboarding', {
                     method: 'POST',
                     headers: getAuthHeaders(),
@@ -1634,7 +1717,7 @@
                 });
 
                 if (response.ok) {
-                    showToast('🎉 ¡Configuración inicial completada!');
+                    showToast('🎉 ¡Perfil y banco inicial configurados!');
                     closeModal('onboarding-modal');
                     refreshData();
                 } else {
@@ -1645,6 +1728,7 @@
                 showToast('Error de servidor', 'error');
             }
         }
+
 
         function renderQuickActions(user) {
             const container = document.getElementById('quick-actions-container');
@@ -1885,11 +1969,25 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">3. Selecciona tu Banco Principal de Chile</label>
+                    <select id="onboard-bank" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white font-semibold text-xs focus:outline-none focus:border-teal-500">
+                        <option value="BancoEstado|CuentaRUT|CuentaRUT BancoEstado">🇨🇱 BancoEstado — CuentaRUT</option>
+                        <option value="Banco Santander|Cuenta Corriente|Santander Cuenta Corriente">🏦 Banco Santander — Cuenta Corriente</option>
+                        <option value="Banco de Chile|Cuenta Corriente|Banco de Chile">🏦 Banco de Chile / Edwards</option>
+                        <option value="BCI|Cuenta Corriente|BCI Cuenta Corriente">🏦 BCI</option>
+                        <option value="Banco Falabella|Tarjeta de Crédito|CMR Falabella Visa">🛍️ Banco Falabella / CMR Crédito</option>
+                        <option value="Mercado Pago|Prepago|Mercado Pago">📱 Mercado Pago Prepago</option>
+                        <option value="Efectivo|Efectivo Billetera|Efectivo Billetera">💵 Efectivo en Billetera</option>
+                    </select>
+                </div>
+
                 <div class="pt-2">
                     <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-extrabold rounded-2xl text-sm shadow-lg shadow-teal-500/20 transition-all active:scale-95">
                         Guardar Configuración & Comenzar 🚀
                     </button>
                 </div>
+
             </form>
         </div>
     <!-- Modal Personalizar Atajos Rápidos -->
