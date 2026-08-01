@@ -1291,13 +1291,21 @@
         }
 
         async function quickExpense(name, amount, accountName, categoryName) {
-            const acc = cachedAccounts.find(a => a.name === accountName);
-            const cat = cachedCategories.find(c => c.name === categoryName);
+            let acc = (cachedAccounts || []).find(a => a.name === accountName);
+            if (!acc && cachedAccounts && cachedAccounts.length > 0) {
+                acc = cachedAccounts[0];
+            }
+
+            let cat = (cachedCategories || []).find(c => c.name === categoryName);
+            if (!cat && cachedCategories && cachedCategories.length > 0) {
+                cat = cachedCategories[0];
+            }
 
             if (!acc) {
-                showToast(`Cuenta ${accountName} no encontrada`, 'error');
+                showToast(`No tienes cuentas disponibles para registrar el gasto.`, 'error');
                 return;
             }
+
 
             try {
                 const response = await fetch('/transactions/expense', {
@@ -1621,23 +1629,49 @@
 
             if (buttons.length === 0) {
                 buttons = [
-                    { name: 'Gasto Rápido 1', amount: 1000, account_name: 'CuentaRUT' }
+                    { name: 'Colación / Almuerzo', amount: 3500, account_name: cachedAccounts[0]?.name || 'CuentaRUT', category_name: cachedCategories[0]?.name || '' }
                 ];
             }
 
             list.innerHTML = '';
-            buttons.forEach(b => addQuickButtonInputRow(b.name, b.amount, b.account_name));
+            buttons.forEach(b => addQuickButtonInputRow(b.name, b.amount, b.account_name, b.category_name));
             openModal('quick-buttons-modal');
         }
 
-        function addQuickButtonInputRow(name = '', amount = '', account = 'CuentaRUT') {
+        function addQuickButtonInputRow(name = '', amount = '', accountName = '', categoryName = '') {
             const list = document.getElementById('quick-buttons-inputs-list');
+            if (!list) return;
+
+            const accOptions = (cachedAccounts || []).map(a => `<option value="${a.name}" ${a.name === accountName ? 'selected' : ''}>${a.name}</option>`).join('');
+            const catOptions = (cachedCategories || []).map(c => `<option value="${c.name}" ${c.name === categoryName ? 'selected' : ''}>${c.name}</option>`).join('');
+
             const row = document.createElement('div');
-            row.className = 'grid grid-cols-12 gap-2 items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-xs qb-row';
+            row.className = 'p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 qb-row';
             row.innerHTML = `
-                <input type="text" placeholder="Nombre (ej: Uber)" value="${name}" required class="col-span-5 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-semibold qb-name">
-                <input type="number" placeholder="Monto" value="${amount}" required min="0" class="col-span-4 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-bold qb-amount">
-                <button type="button" onclick="this.closest('.qb-row').remove()" class="col-span-3 text-rose-400 hover:text-rose-300 font-semibold text-center"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
+                <div class="flex items-center justify-between gap-2">
+                    <input type="text" placeholder="Nombre (ej: Colectivo, Supermercado)" value="${name}" required class="flex-1 px-3 py-2 rounded-xl bg-slate-800 text-white font-semibold text-xs qb-name focus:outline-none focus:border-teal-500 border border-slate-700">
+                    <div class="relative w-32 shrink-0">
+                        <span class="absolute left-2.5 top-2 text-slate-400 font-bold text-xs">$</span>
+                        <input type="number" placeholder="Monto" value="${amount}" required min="0" class="w-full pl-6 pr-2 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs qb-amount focus:outline-none focus:border-teal-500 border border-slate-700">
+                    </div>
+                    <button type="button" onclick="this.closest('.qb-row').remove()" class="w-8 h-8 rounded-lg bg-rose-950/40 text-rose-400 hover:bg-rose-900/60 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block mb-0.5">Cuenta:</span>
+                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 qb-account">
+                            ${accOptions || '<option value="CuentaRUT">CuentaRUT</option>'}
+                        </select>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block mb-0.5">Categoría:</span>
+                        <select class="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 qb-category">
+                            ${catOptions || '<option value="Gastos Generales">Gastos Generales</option>'}
+                        </select>
+                    </div>
+                </div>
             `;
             list.appendChild(row);
         }
@@ -1651,12 +1685,15 @@
             rows.forEach((r, idx) => {
                 const name = r.querySelector('.qb-name').value.trim();
                 const amount = parseFloat(r.querySelector('.qb-amount').value);
+                const account_name = r.querySelector('.qb-account') ? r.querySelector('.qb-account').value : (cachedAccounts[0]?.name || 'CuentaRUT');
+                const category_name = r.querySelector('.qb-category') ? r.querySelector('.qb-category').value : '';
+
                 if (name && !isNaN(amount)) {
                     buttons.push({
                         name: name,
                         amount: amount,
-                        account_name: 'CuentaRUT',
-                        category_name: 'Transporte (Colectivo / Uber / Bus Interurbano)',
+                        account_name: account_name,
+                        category_name: category_name,
                         color_border: colors[idx % colors.length]
                     });
                 }
@@ -1670,7 +1707,7 @@
                 });
 
                 if (response.ok) {
-                    showToast('Atajos personalizados guardados');
+                    showToast('🎉 Atajos personalizados guardados correctamente');
                     closeModal('quick-buttons-modal');
                     if (currentUser) {
                         currentUser.quick_buttons_json = JSON.stringify(buttons);
@@ -1684,6 +1721,7 @@
                 showToast('Error de conexión', 'error');
             }
         }
+
 
         function openModal(id) {
             document.getElementById(id).classList.remove('hidden');
