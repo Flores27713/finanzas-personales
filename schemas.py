@@ -25,6 +25,10 @@ class UserResponse(BaseModel):
     name: str
     email: str
     picture: Optional[str] = None
+    is_admin: bool = False
+    monthly_income: float = 0.0
+    onboarding_completed: bool = False
+    quick_buttons_json: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -33,6 +37,12 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+class OnboardingRequest(BaseModel):
+    monthly_income: float = Field(..., ge=0.0, description="Renta líquida mensual")
+    categories_budget: Optional[dict] = Field(default_factory=dict, description="Presupuestos por categoría")
+    quick_buttons: Optional[List[dict]] = Field(default_factory=list, description="Lista de botones rápidos")
+
 
 
 # Esquemas de Cuenta

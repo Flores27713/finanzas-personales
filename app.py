@@ -26,6 +26,21 @@ def run_auto_migrations():
             except Exception:
                 pass
 
+        for col, col_type in [("is_admin", "BOOLEAN DEFAULT FALSE"), ("monthly_income", "FLOAT DEFAULT 0.0"), ("onboarding_completed", "BOOLEAN DEFAULT FALSE"), ("quick_buttons_json", "VARCHAR")]:
+            try:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type};"))
+                conn.commit()
+            except Exception:
+                pass
+
+        try:
+            conn.execute(text("UPDATE account SET user_id = 1 WHERE user_id IS NULL;"))
+            conn.execute(text("UPDATE category SET user_id = 1 WHERE user_id IS NULL;"))
+            conn.execute(text("UPDATE transaction SET user_id = 1 WHERE user_id IS NULL;"))
+            conn.commit()
+        except Exception:
+            pass
+
 
 try:
     run_auto_migrations()
@@ -38,12 +53,22 @@ Base.metadata.create_all(bind=engine)
 APP_PIN = os.getenv("APP_PIN", "2771")
 
 def get_or_create_default_user(db: Session):
-    all_u = [u for u in db.query(models.User).all() if u is not None]
-    if all_u:
-        return all_u[0]
-    return crud.create_user_with_defaults(
-        db, name="Omar", email="omar@finanzas.local", password=APP_PIN
-    )
+    user = db.query(models.User).filter(models.User.email == "omar@finanzas.local").first()
+    if not user:
+        user = db.query(models.User).filter(models.User.name == "Omar").first()
+    if not user:
+        user = db.query(models.User).filter(models.User.id == 1).first()
+    if not user:
+        user = crud.create_user_with_defaults(
+            db, name="Omar", email="omar@finanzas.local", password=APP_PIN
+        )
+    if not user.is_admin:
+        user.is_admin = True
+        db.commit()
+    crud.ensure_user_defaults(db, user.id)
+    return user
+
+
 
 
 
@@ -117,6 +142,27 @@ def check_pin(login: schemas.PinLogin, db: Session = Depends(get_db)):
     u_id = user.id if user else 1
     u_name = user.name if user else "Omar"
     return {"status": "ok", "message": "Acceso concedido", "user_id": u_id, "name": u_name}
+
+
+# ==========================================
+# ENDPOINTS DE ADMINISTRACIÓN & ONBOARDING
+# ==========================================
+@app.get("/api/admin/users")
+def list_users_admin(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Acceso denegado. Se requieren permisos de administrador.")
+    return crud.get_all_users_admin(db)
+
+@app.delete("/api/admin/users/{target_id}")
+def delete_user_admin(target_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Acceso denegado. Se requieren permisos de administrador.")
+    return crud.delete_user_admin(db, target_id, current_user.id)
+
+@app.post("/api/onboarding")
+def complete_onboarding(data: schemas.OnboardingRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    return crud.complete_onboarding(db, current_user.id, data)
+
 
 
 

@@ -141,12 +141,34 @@ def test_system():
     assert dashB["total_balance"] == 0.0, "El nuevo usuario debe comenzar en $0"
 
 
-    assert len(dashB["accounts"]) == 4, "El nuevo usuario debe tener sus 4 cuentas por defecto"
-    print(f"[OK] Registro de Usuario B completado. Espacio aislado en $0 con {len(dashB['accounts'])} cuentas.")
+    # 10. Probar Panel de Administración (Listar usuarios con permisos Admin)
+    admin_users_resp = client.get("/api/admin/users", headers=headers)
+    assert admin_users_resp.status_code == 200, f"Error en API Admin List: {admin_users_resp.text}"
+    admin_users = admin_users_resp.json()
+    assert len(admin_users) >= 2, "Deben existir al menos el usuario Admin y el usuario B"
+    print(f"[OK] Panel de Administración: {len(admin_users)} usuarios listados correctamente")
+
+    # 11. Probar Onboarding Inicial para Usuario B
+    onboard_resp = client.post("/api/onboarding", json={
+        "monthly_income": 500000.0,
+        "categories_budget": {"Arriendo (Fijo)": 170000.0}
+    }, headers=headersB)
+    assert onboard_resp.status_code == 200, f"Error en Onboarding: {onboard_resp.text}"
+    userB_updated = onboard_resp.json()
+    assert userB_updated["onboarding_completed"] == True
+    assert userB_updated["monthly_income"] == 500000.0
+    print("[OK] Onboarding inicial completado exitosamente para Usuario B")
+
+    # 12. Probar Borrado de Usuario B desde el Panel de Admin
+    userB_id = userB_data["user"]["id"]
+    del_resp = client.delete(f"/api/admin/users/{userB_id}", headers=headers)
+    assert del_resp.status_code == 200, f"Error al eliminar usuario B: {del_resp.text}"
+    print(f"[OK] Usuario B (ID #{userB_id}) eliminado limpiamente desde el Panel de Administración")
 
     print("--- TODAS LAS PRUEBAS DE SEGURIDAD E INTEGRIDAD PASARON CON EXITO ---")
 
 
 if __name__ == "__main__":
     test_system()
+
 

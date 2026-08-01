@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -12,11 +12,16 @@ class User(Base):
     hashed_password = Column(String, nullable=True) # Nulo si accede por Google
     google_id = Column(String, unique=True, nullable=True)
     picture = Column(String, nullable=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    monthly_income = Column(Float, default=0.0, nullable=False)
+    onboarding_completed = Column(Boolean, default=False, nullable=False)
+    quick_buttons_json = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+
 
     def __repr__(self):
         return f"<User(id={self.id}, name='{self.name}', email='{self.email}')>"

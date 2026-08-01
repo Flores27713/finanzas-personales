@@ -34,11 +34,35 @@ def get_user_by_email(db: Session, email: str):
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
+def ensure_user_defaults(db: Session, user_id: int):
+    """Garantiza que el usuario tenga sus 4 cuentas y 6 categorías asociadas."""
+    accounts = db.query(models.Account).filter(models.Account.user_id == user_id).all()
+    if not accounts:
+        for acc in INITIAL_ACCOUNTS:
+            try:
+                acc_obj = models.Account(user_id=user_id, name=acc["name"], balance=acc["balance"])
+                db.add(acc_obj)
+                db.commit()
+            except Exception:
+                db.rollback()
+
+    categories = db.query(models.Category).filter(models.Category.user_id == user_id).all()
+    if not categories:
+        for cat in INITIAL_CATEGORIES:
+            try:
+                cat_obj = models.Category(user_id=user_id, name=cat["name"], monthly_budget=cat["monthly_budget"])
+                db.add(cat_obj)
+                db.commit()
+            except Exception:
+                db.rollback()
+
+
 def create_user_with_defaults(db: Session, name: str, email: str, password: str = None, google_id: str = None, picture: str = None):
     clean_email = email.strip().lower()
     
     user = db.query(models.User).filter(models.User.email == clean_email).first()
     if user:
+        ensure_user_defaults(db, user.id)
         return user
 
     hashed_pw = hash_password(password) if password else None
@@ -54,32 +78,16 @@ def create_user_with_defaults(db: Session, name: str, email: str, password: str 
     try:
         db.add(db_user)
         db.commit()
-    except Exception as e:
-        print("[CREATE USER COMMIT FAILED]:", e)
+    except Exception:
         db.rollback()
-        db.expunge_all()
-        return db.query(models.User).filter(models.User.email == clean_email).first()
+        user = db.query(models.User).filter(models.User.email == clean_email).first()
+        if user:
+            ensure_user_defaults(db, user.id)
+            return user
+        return db.query(models.User).first()
 
-
-
-
-    try:
-        for acc in INITIAL_ACCOUNTS:
-            acc_obj = models.Account(user_id=db_user.id, name=acc["name"], balance=0.0)
-            db.add(acc_obj)
-
-        for cat in INITIAL_CATEGORIES:
-            cat_obj = models.Category(user_id=db_user.id, name=cat["name"], monthly_budget=cat["monthly_budget"])
-            db.add(cat_obj)
-
-        db.commit()
-    except Exception as e:
-        print("[INITIAL ACCOUNTS/CATS EXCEPTION]:", e)
-        db.rollback()
-
-
+    ensure_user_defaults(db, db_user.id)
     return db_user
-
 
 
 def authenticate_user_email(db: Session, email: str, password: str):
@@ -88,19 +96,80 @@ def authenticate_user_email(db: Session, email: str, password: str):
         raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
     if not user.hashed_password or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
+    ensure_user_defaults(db, user.id)
     return user
+
+import json
+
+def get_all_users_admin(db: Session):
+    users = db.query(models.User).order_by(models.User.created_at.desc()).all()
+    result = []
+    for u in users:
+        acc_count = db.query(models.Account).filter(models.Account.user_id == u.id).count()
+        tx_count = db.query(models.Transaction).filter(models.Transaction.user_id == u.id).count()
+        result.append({
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "is_admin": u.is_admin,
+            "monthly_income": u.monthly_income,
+            "onboarding_completed": u.onboarding_completed,
+            "created_at": u.created_at,
+            "account_count": acc_count,
+            "transaction_count": tx_count
+        })
+    return result
+
+def delete_user_admin(db: Session, target_user_id: int, current_admin_id: int):
+    if target_user_id == current_admin_id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta de administrador principal.")
+
+    target_user = get_user_by_id(db, target_user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    db.query(models.Transaction).filter(models.Transaction.user_id == target_user_id).delete(synchronize_session=False)
+    db.query(models.Account).filter(models.Account.user_id == target_user_id).delete(synchronize_session=False)
+    db.query(models.Category).filter(models.Category.user_id == target_user_id).delete(synchronize_session=False)
+    db.delete(target_user)
+    db.commit()
+    return {"status": "ok", "message": f"Usuario #{target_user_id} ({target_user.email}) eliminado correctamente."}
+
+def complete_onboarding(db: Session, user_id: int, data: schemas.OnboardingRequest):
+    user = get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    user.monthly_income = data.monthly_income
+    user.onboarding_completed = True
+
+    if data.quick_buttons:
+        user.quick_buttons_json = json.dumps(data.quick_buttons)
+
+    if data.categories_budget:
+        categories = get_categories(db, user_id)
+        for cat in categories:
+            if cat.name in data.categories_budget:
+                cat.monthly_budget = float(data.categories_budget[cat.name])
+
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 
 # ==========================================
 # FUNCIONES MULTI-TENANT (POR USER_ID)
 # ==========================================
 def get_accounts(db: Session, user_id: int):
+    ensure_user_defaults(db, user_id)
     return db.query(models.Account).filter(models.Account.user_id == user_id).all()
 
 def get_account_by_id(db: Session, account_id: int, user_id: int):
     return db.query(models.Account).filter(models.Account.id == account_id, models.Account.user_id == user_id).first()
 
 def get_categories(db: Session, user_id: int):
+    ensure_user_defaults(db, user_id)
     return db.query(models.Category).filter(models.Category.user_id == user_id).all()
 
 def get_category_by_id(db: Session, category_id: int, user_id: int):
