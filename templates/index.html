@@ -1,36 +1,28 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Finanzas Personales</title>
+    <title>Finanzas Personales | Control & Presupuesto</title>
+    <!-- Favicon para la Pestaña del Navegador (Logotipo estilo Fintual) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='28' fill='%232563EB'/><path d='M25 35h50a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6H25a6 6 0 0 1-6-6V41a6 6 0 0 1 6-6z' fill='white'/><circle cx='62' cy='50' r='5' fill='%232563EB'/></svg>">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        soft: {
-                            lilac: '#e9d5ff',
-                            blush: '#fbcfe8',
-                            rose: '#fda4af',
-                            slate: '#94a3b8',
-                            ivory: '#fefae0',
-                            cream: '#fef08a',
-                            taupe: '#d5bdaf',
-                            teal: '#38bdf8',
-                            petrol: '#2b6a78',
-                            gold: '#d4a373',
-                            navy: '#0f172a',
-                            rosewood: '#a8828b'
-                        },
-                        brand: {
-                            50: '#fdf8f6',
-                            500: '#d4a373',
-                            600: '#2b6a78',
-                            900: '#0f172a',
+                        palette: {
+                            ivory: '#F8FAFC',     // Blanco roto / fondo contenedor
+                            gray: '#64748B',      // Gris neutro cálido (Texto secundario)
+                            grayLight: '#F1F5F9', // Gris super claro para inputs
+                            sand: '#E3B08B',      // Terracota / Arena cálido (Acento / Botones)
+                            sandDark: '#D49B72',  // Sand hover
+                            petrol: '#176878',    // Azul Petróleo / Teal profundo (Botones primarios)
+                            dark: '#0F172A',      // Carbón Profundo (Texto principal)
+                            void: '#FFFFFF'       // Fondo principal blanco puro
                         }
                     }
                 }
@@ -50,42 +42,62 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at top center, #1b1638 0%, #090d16 65%, #050810 100%);
+            background-color: #F8FAFC;
+            background-image: radial-gradient(at 50% 0%, rgba(23, 104, 120, 0.05) 0px, transparent 75%),
+                              radial-gradient(at 100% 100%, rgba(227, 176, 139, 0.05) 0px, transparent 75%);
             background-attachment: fixed;
+            color: #0F172A;
         }
         .glass-card {
-            background: rgba(15, 23, 42, 0.78);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(212, 163, 115, 0.18);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+        }
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-card-hover:hover {
-            border-color: rgba(212, 163, 115, 0.35);
-            box-shadow: 0 15px 35px -10px rgba(212, 163, 115, 0.15);
+            border-color: #176878;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -12px rgba(23, 104, 120, 0.12);
         }
         .glass-modal {
-            background: rgba(15, 23, 42, 0.96);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(212, 163, 115, 0.25);
+            background: #FFFFFF;
+            backdrop-filter: blur(24px);
+            border: 1px solid #CBD5E1;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #176878;
+            border-radius: 9999px;
         }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen pb-12">
+<body class="text-palette-dark min-h-screen pb-12">
+
 
 
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Pantalla de Autenticación Universal (Login / Registro / Google) -->
-    <div id="auth-lockscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl border border-slate-800">
+    <div id="auth-lockscreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+        <div class="glass-card w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200 bg-white">
             
             <div class="text-center space-y-2">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
-                    <i class="fa-solid fa-wallet text-slate-950 text-2xl"></i>
+                <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-wallet text-white text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-extrabold text-white">Finanzas Personales</h2>
-                <p class="text-xs text-slate-400">Inicia sesión o crea tu cuenta para acceder</p>
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Finanzas Personales</h2>
+                <p class="text-xs font-medium text-slate-500">Inicia sesión o crea tu cuenta para acceder</p>
             </div>
 
             <!-- Botón Oficial de Google Sign-In -->
@@ -96,7 +108,7 @@
                     data-auto_prompt="false">
                 </div>
                 
-                <button type="button" onclick="promptGoogleSignIn()" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-2xl text-sm border border-slate-700 shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95">
+                <button type="button" onclick="promptGoogleSignIn()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-800 font-bold rounded-full text-sm border border-slate-300 shadow-sm flex items-center justify-center gap-3 transition-all active:scale-95">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -107,21 +119,21 @@
                 </button>
 
                 <div class="flex items-center gap-3 my-3">
-                    <div class="h-px bg-slate-800 flex-1"></div>
-                    <span class="text-[11px] text-slate-500 font-semibold uppercase">o correo electrónico</span>
-                    <div class="h-px bg-slate-800 flex-1"></div>
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                    <span class="text-[11px] text-slate-400 font-semibold uppercase">o correo electrónico</span>
+                    <div class="h-px bg-slate-200 flex-1"></div>
                 </div>
             </div>
 
             <!-- Navegación por Pestañas (Login vs Registro vs PIN) -->
-            <div class="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
-                <button type="button" id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all">
+            <div class="flex rounded-full bg-slate-100 p-1 border border-slate-200 text-xs">
+                <button type="button" id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 font-bold rounded-full bg-blue-600 text-white transition-all shadow-sm">
                     Iniciar Sesión
                 </button>
-                <button type="button" id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+                <button type="button" id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-2 font-bold rounded-full text-slate-600 hover:text-slate-900 transition-all">
                     Crear Cuenta
                 </button>
-                <button type="button" id="tab-pin-btn" onclick="switchAuthTab('pin')" class="flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+                <button type="button" id="tab-pin-btn" onclick="switchAuthTab('pin')" class="flex-1 py-2 font-bold rounded-full text-slate-600 hover:text-slate-900 transition-all">
                     PIN
                 </button>
             </div>
@@ -129,16 +141,16 @@
             <!-- Formulario 1: Iniciar Sesión Email -->
             <form id="form-email-login" onsubmit="handleEmailLoginSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico</label>
                     <input type="email" id="login-email" required placeholder="tu@correo.com"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Contraseña</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña</label>
                     <input type="password" id="login-password" required placeholder="••••••••"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white text-sm">
                 </div>
-                <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-teal-600/25 transition-all active:scale-95">
+                <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-full text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95">
                     Ingresar a mis Finanzas
                 </button>
             </form>
@@ -146,21 +158,21 @@
             <!-- Formulario 2: Crear Cuenta -->
             <form id="form-email-register" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Completo</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nombre Completo</label>
                     <input type="text" id="reg-name" required placeholder="Ej: Omar Flores"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico</label>
                     <input type="email" id="reg-email" required placeholder="tu@correo.com"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Contraseña (Mínimo 4 caracteres)</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña (Mínimo 4 caracteres)</label>
                     <input type="password" id="reg-password" minlength="4" required placeholder="••••••••"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white text-sm">
                 </div>
-                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-emerald-600/25 transition-all active:scale-95">
+                <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-full text-sm shadow-md shadow-emerald-500/20 transition-all active:scale-95">
                     Crear mi Cuenta Gratis
                 </button>
             </form>
@@ -168,18 +180,19 @@
             <!-- Formulario 3: PIN Rápido Legacy (2771) -->
             <form id="form-pin-login" onsubmit="handlePinLogin(event)" class="space-y-4 hidden">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">PIN de Acceso Rápido</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">PIN de Acceso Rápido</label>
                     <input type="password" id="input-pin" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="****"
-                        class="w-full text-center tracking-[0.5em] text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl py-3 text-white focus:outline-none focus:border-teal-500">
+                        class="w-full text-center tracking-[0.5em] text-2xl font-bold bg-slate-50 border border-slate-200 rounded-2xl py-3 text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white">
                 </div>
-                <button type="submit" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-teal-600/25 transition-all active:scale-95">
+                <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-full text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95">
                     Ingresar por PIN
                 </button>
             </form>
 
-            <p id="auth-error" class="text-xs text-rose-400 text-center hidden"></p>
+            <p id="auth-error" class="text-xs text-rose-500 font-semibold text-center hidden"></p>
         </div>
     </div>
+
 
     <!-- Contenido de la Aplicación -->
     <div id="app-content" class="max-w-4xl mx-auto px-4 pt-6 space-y-6 hidden">
@@ -689,21 +702,23 @@
             document.getElementById('form-email-register').classList.add('hidden');
             document.getElementById('form-pin-login').classList.add('hidden');
 
-            document.getElementById('tab-login-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
-            document.getElementById('tab-register-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
-            document.getElementById('tab-pin-btn').className = "flex-1 py-2 font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+            const inactiveClass = "flex-1 py-2 font-bold rounded-full text-slate-600 hover:text-slate-900 transition-all";
+            document.getElementById('tab-login-btn').className = inactiveClass;
+            document.getElementById('tab-register-btn').className = inactiveClass;
+            document.getElementById('tab-pin-btn').className = inactiveClass;
 
             if (tab === 'login') {
                 document.getElementById('form-email-login').classList.remove('hidden');
-                document.getElementById('tab-login-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all";
+                document.getElementById('tab-login-btn').className = "flex-1 py-2 font-bold rounded-full bg-blue-600 text-white transition-all shadow-sm";
             } else if (tab === 'register') {
                 document.getElementById('form-email-register').classList.remove('hidden');
-                document.getElementById('tab-register-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-emerald-600 text-white transition-all";
+                document.getElementById('tab-register-btn').className = "flex-1 py-2 font-bold rounded-full bg-emerald-600 text-white transition-all shadow-sm";
             } else if (tab === 'pin') {
                 document.getElementById('form-pin-login').classList.remove('hidden');
-                document.getElementById('tab-pin-btn').className = "flex-1 py-2 font-semibold rounded-lg bg-teal-600 text-white transition-all";
+                document.getElementById('tab-pin-btn').className = "flex-1 py-2 font-bold rounded-full bg-blue-600 text-white transition-all shadow-sm";
             }
         }
+
 
         async function handleRegisterSubmit(event) {
             event.preventDefault();
@@ -1176,13 +1191,13 @@
 
             if (!accounts || accounts.length === 0) {
                 list.innerHTML = `
-                    <div class="col-span-full p-6 rounded-3xl bg-slate-900/80 border border-[#d4a373]/30 border-dashed text-center space-y-3 shadow-xl">
-                        <div class="w-12 h-12 rounded-2xl bg-[#d4a373]/10 border border-[#d4a373]/30 flex items-center justify-center mx-auto text-[#d4a373] text-xl shadow-lg">
+                    <div class="col-span-full p-6 rounded-3xl bg-white border border-palette-petrol/30 border-dashed text-center space-y-3 shadow-sm">
+                        <div class="w-12 h-12 rounded-2xl bg-palette-petrol/10 border border-palette-petrol/30 flex items-center justify-center mx-auto text-palette-petrol text-xl shadow-sm">
                             <i class="fa-solid fa-building-columns"></i>
                         </div>
-                        <h3 class="text-sm font-bold text-white">¡No tienes bancos ni tarjetas registradas aún!</h3>
-                        <p class="text-xs text-slate-400 max-w-sm mx-auto">Selecciona tu primer banco de Chile (BancoEstado CuentaRUT, Santander, BCI, Banco Falabella o Mercado Pago) para comenzar.</p>
-                        <button onclick="openAddAccountModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#2b6a78] to-[#d4a373] text-white font-extrabold text-xs shadow-lg shadow-[#2b6a78]/20 hover:opacity-90 transition-all active:scale-95">
+                        <h3 class="text-sm font-bold text-palette-dark">¡No tienes bancos ni tarjetas registradas aún!</h3>
+                        <p class="text-xs text-palette-gray max-w-sm mx-auto">Selecciona tu primer banco de Chile (BancoEstado CuentaRUT, Santander, BCI, Banco Falabella o Mercado Pago) para comenzar.</p>
+                        <button onclick="openAddAccountModal()" class="px-5 py-2.5 rounded-xl bg-palette-petrol text-white font-extrabold text-xs shadow-lg shadow-palette-petrol/20 hover:opacity-90 transition-all active:scale-95">
                             <i class="fa-solid fa-plus-circle mr-1"></i> Agregar Mi Primer Banco
                         </button>
                     </div>
@@ -1191,52 +1206,58 @@
             }
 
             list.innerHTML = accounts.map(acc => {
-                let badgeColor = 'from-slate-900 to-[#1e293b] border-[#d4a373]/20';
-                let icon = 'fa-building-columns text-[#38bdf8]';
-                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#2b6a78]/20 text-[#38bdf8] border border-[#2b6a78]/40 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
+                let badgeColor = 'from-white to-slate-50 text-palette-dark border-slate-200';
+                let icon = 'fa-building-columns text-palette-petrol';
+                let typeBadge = `<span class="px-2 py-0.5 rounded-md bg-palette-petrol/10 text-palette-petrol border border-palette-petrol/20 text-[10px] font-bold">${acc.account_type || 'Cuenta'}</span>`;
 
                 const accName = acc.name || '';
                 const bankName = acc.bank_name || '';
 
                 if (accName.includes('CuentaRUT') || bankName.includes('BancoEstado')) {
-                    badgeColor = 'from-[#0f172a] via-[#1e293b] to-[#1e1b4b] border-[#d4a373]/40';
-                    icon = 'fa-credit-card text-[#d4a373]';
+                    badgeColor = 'from-slate-900 via-slate-800 to-slate-950 text-white border-palette-sand/40';
+                    icon = 'fa-credit-card text-palette-sand';
                     if (accName.includes('CuentaRUT')) {
-                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#d4a373]/20 text-[#fefae0] border border-[#d4a373]/40 text-[10px] font-bold">CuentaRUT</span>`;
+                        typeBadge = `<span class="px-2 py-0.5 rounded-md bg-palette-sand/20 text-palette-sand border border-palette-sand/40 text-[10px] font-bold">CuentaRUT</span>`;
                     }
                 } else if (acc.account_type?.includes('Crédito') || accName.includes('Crédito') || accName.includes('CMR')) {
-                    badgeColor = 'from-[#3b0764]/60 via-[#1e1b4b]/80 to-[#0f172a] border-[#e9d5ff]/40 shadow-lg shadow-[#3b0764]/30';
-                    icon = 'fa-credit-card text-[#e9d5ff] animate-pulse';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#e9d5ff]/20 text-[#fbcfe8] border border-[#e9d5ff]/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
+                    badgeColor = 'from-purple-950 via-slate-900 to-indigo-950 text-white border-purple-400/40 shadow-md';
+                    icon = 'fa-credit-card text-purple-300 animate-pulse';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-purple-400/20 text-purple-200 border border-purple-400/40 text-[10px] font-bold">Tarjeta de Crédito</span>`;
                 } else if (accName.includes('Mercado Pago') || accName.includes('Tenpo') || accName.includes('MACH')) {
-                    badgeColor = 'from-[#1e4e58]/70 via-[#0f172a] to-[#090d16] border-[#38bdf8]/30';
-                    icon = 'fa-wallet text-[#38bdf8]';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 text-[10px] font-bold">Prepago Digital</span>`;
+                    badgeColor = 'from-teal-900 via-slate-900 to-slate-950 text-white border-teal-400/40';
+                    icon = 'fa-wallet text-teal-300';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-teal-400/20 text-teal-200 border border-teal-400/40 text-[10px] font-bold">Prepago Digital</span>`;
                 } else if (accName.includes('Efectivo') || accName.includes('Billetera')) {
-                    badgeColor = 'from-[#432818]/60 via-[#0f172a] to-[#050810] border-[#d5bdaf]/40';
-                    icon = 'fa-money-bill-wave text-[#d5bdaf]';
-                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-[#d5bdaf]/20 text-[#fefae0] border border-[#d5bdaf]/40 text-[10px] font-bold">Efectivo</span>`;
+                    badgeColor = 'from-amber-50 to-orange-50/50 text-slate-900 border-amber-300/80';
+                    icon = 'fa-money-bill-wave text-amber-700';
+                    typeBadge = `<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">Efectivo</span>`;
                 }
 
+                const isDark = badgeColor.includes('text-white');
+                const titleColor = isDark ? 'text-white' : 'text-slate-900';
+                const labelColor = isDark ? 'text-slate-300' : 'text-slate-500';
+                const balanceColor = isDark ? 'text-white' : 'text-slate-900';
+
                 return `
-                    <div class="glass-card p-4 rounded-2xl bg-gradient-to-br ${badgeColor} relative overflow-hidden flex flex-col justify-between border space-y-3 transition-all hover:scale-[1.02] shadow-xl">
+                    <div class="glass-card p-4 rounded-2xl bg-gradient-to-br ${badgeColor} relative overflow-hidden flex flex-col justify-between border space-y-3 transition-all hover:scale-[1.02] shadow-sm">
                         <div class="flex items-center justify-between">
                             <div class="space-y-1">
-                                <span class="text-xs font-bold text-white tracking-wide block">${acc.name}</span>
+                                <span class="text-xs font-bold ${titleColor} tracking-wide block">${acc.name}</span>
                                 ${typeBadge}
                             </div>
-                            <div class="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0">
                                 <i class="fa-solid ${icon} text-sm"></i>
                             </div>
                         </div>
                         <div>
-                            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Saldo Disponible</span>
-                            <div class="text-xl font-extrabold text-[#fefae0] mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
+                            <span class="text-[10px] ${labelColor} uppercase tracking-wider font-semibold">Saldo Disponible</span>
+                            <div class="text-xl font-extrabold ${balanceColor} mt-0.5 tracking-tight">${formatCLP(acc.balance)}</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
 
 
         function openAddAccountModal() {
