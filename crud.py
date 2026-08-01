@@ -7,6 +7,12 @@ from fastapi import HTTPException
 import models
 import schemas
 
+MONTH_NAMES = {
+    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+    5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+    9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+}
+
 def get_accounts(db: Session):
     return db.query(models.Account).all()
 
@@ -208,4 +214,113 @@ def get_dashboard_summary(db: Session):
         "categories_summary": categories_summary,
         "daily_hormiga_limit": daily_hormiga_limit,
         "days_remaining_in_month": days_remaining
+    }
+
+
+def get_monthly_report(db: Session, year: int, month: int):
+    """
+    Genera un reporte de cierre mensual con totales de ingresos, gastos, desglose y recomendaciones de ahorro.
+    """
+    # Total de Ingresos (INCOME) en el mes seleccionado
+    total_income = (
+        db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(
+            models.Transaction.transaction_type == "INCOME",
+            extract("year", models.Transaction.date) == year,
+            extract("month", models.Transaction.date) == month
+        )
+        .scalar()
+    )
+    total_income = float(total_income)
+
+    # Total de Gastos (EXPENSE) en el mes seleccionado
+    total_expense = (
+        db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+        .filter(
+            models.Transaction.transaction_type == "EXPENSE",
+            extract("year", models.Transaction.date) == year,
+            extract("month", models.Transaction.date) == month
+        )
+        .scalar()
+    )
+    total_expense = float(total_expense)
+
+    net_savings = total_income - total_expense
+
+    # Desglose por categoría en ese mes
+    categories = get_categories(db)
+    categories_breakdown = []
+    for cat in categories:
+        spent = (
+            db.query(func.coalesce(func.sum(models.Transaction.amount), 0.0))
+            .filter(
+                models.Transaction.category_id == cat.id,
+                models.Transaction.transaction_type == "EXPENSE",
+                extract("year", models.Transaction.date) == year,
+                extract("month", models.Transaction.date) == month
+            )
+            .scalar()
+        )
+        spent = float(spent)
+        pct = (spent / cat.monthly_budget * 100) if cat.monthly_budget > 0 else 0.0
+        categories_breakdown.append({
+            "category_name": cat.name,
+            "monthly_budget": cat.monthly_budget,
+            "total_spent": spent,
+            "percentage_used": round(pct, 1)
+        })
+
+    sorted_cats = sorted(categories_breakdown, key=lambda x: x["total_spent"], reverse=True)
+
+    # Recomendaciones Inteligentes de Ahorro
+    recommendations = []
+    top_spent_cat = next((c for c in sorted_cats if c["total_spent"] > 0), None)
+    if top_spent_cat:
+        cat_name = top_spent_cat["category_name"]
+        amt = top_spent_cat["total_spent"]
+        if "Transporte" in cat_name:
+            recommendations.append(
+                f"🚕 Tu mayor gasto fue en '{cat_name}' (${amt:,.0f} CLP). Intenta planificar tus viajes con anticipación o combinar colectivos para reducir trayectos nocturnos en Uber."
+            )
+        elif "Alimentación" in cat_name:
+            recommendations.append(
+                f"🛒 Gastaste ${amt:,.0f} CLP en '{cat_name}'. Comprar en ferias locales o planificar compras semanales al por mayor puede ahorrarte hasta un 25% mensual."
+            )
+        elif "Ocio" in cat_name:
+            recommendations.append(
+                f"🎉 El gasto en '{cat_name}' alcanzó ${amt:,.0f} CLP. Fijar un límite estricto para salidas de fin de semana evitará imprevistos a fin de mes."
+            )
+        else:
+            recommendations.append(
+                f"💡 La categoría con mayor gasto fue '{cat_name}' (${amt:,.0f} CLP). Revisa si existen gastos hormiga secundarios en esta área."
+            )
+
+    if total_expense > total_income and total_income > 0:
+        recommendations.append(
+            "⚠️ Tus gastos superaron tus ingresos del mes. Considera agendar un evento DJ adicional o ajustar tus presupuestos en ocio y transporte."
+        )
+    elif net_savings > 0:
+        recommendations.append(
+            f"💪 ¡Excelente trabajo! Tuviste un superávit de ${net_savings:,.0f} CLP en este mes. Te aconsejamos mover parte de este saldo a 'Mercado Pago Ahorro' para proteger tu fondo del Máster."
+        )
+
+    overbudget_cats = [c for c in categories_breakdown if c["percentage_used"] > 100]
+    if overbudget_cats:
+        names = ", ".join([c["category_name"].split("(")[0].strip() for c in overbudget_cats])
+        recommendations.append(
+            f"🚨 Excediste el presupuesto asignado en: {names}. Intenta reajustar los límites para el próximo mes."
+        )
+
+    if not recommendations:
+        recommendations.append("✨ Mantén el control de tus finanzas registrando todos tus ingresos y gastos diarios.")
+
+    return {
+        "year": year,
+        "month": month,
+        "month_name": MONTH_NAMES.get(month, f"Mes {month}"),
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "net_savings": net_savings,
+        "categories_breakdown": sorted_cats,
+        "recommendations": recommendations
     }

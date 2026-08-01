@@ -135,6 +135,25 @@ def read_transactions(limit: int = 20, db: Session = Depends(get_db)):
     return crud.get_recent_transactions(db, limit=limit)
 
 
+@app.get("/api/monthly-report", dependencies=[Depends(verify_pin)])
+def get_monthly_report(
+    year: int = None,
+    month: int = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Obtener reporte de cierre mensual con totales, desglose y recomendaciones de ahorro.
+    """
+    from datetime import datetime
+    now = datetime.now()
+    if not year:
+        year = now.year
+    if not month:
+        month = now.month
+    return crud.get_monthly_report(db, year, month)
+
+
+
 # Servidor directo si se ejecuta 'python app.py'
 if __name__ == "__main__":
     import uvicorn
