@@ -301,18 +301,19 @@
         </section>
 
 
-        <!-- Botones de Gestión (Gasto, Ingreso DJ & Transferencia) -->
+        <!-- Botones de Gestión (Gasto, Ingreso & Transferencia) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button onclick="openModal('expense-modal')" class="py-3 px-4 bg-rose-600/90 hover:bg-rose-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="fa-solid fa-minus-circle"></i> Registrar Gasto
             </button>
             <button onclick="openModal('income-modal')" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
-                <i class="fa-solid fa-compact-disc text-amber-300 text-base"></i> Ingreso Evento DJ
+                <i class="fa-solid fa-plus-circle text-white text-base"></i> Registrar Ingreso / Sueldo
             </button>
             <button onclick="openModal('transfer-modal')" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl text-sm border border-slate-700 flex items-center justify-center gap-2 transition-all active:scale-95">
                 <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo
             </button>
         </div>
+
 
         <!-- Tarjetas de Cuentas (Digitales & Efectivo Billetera) -->
         <section class="space-y-3">
@@ -359,28 +360,28 @@
 
             <form id="expense-form" onsubmit="handleExpenseSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto (CLP)</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto del Gasto (CLP)</label>
                     <input type="number" id="exp-amount" required min="1" step="any" placeholder="Ej: 3500"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Cuenta de Origen</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta de Origen (¿De dónde sale el dinero?)</label>
                     <select id="exp-account" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏷️ Destinación / ¿En qué se utilizó el dinero?</label>
                     <select id="exp-category" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nota / Detalle (Opcional)</label>
-                    <input type="text" id="exp-note" placeholder="Ej: Pasaje o almuerzo"
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">📝 Detalle o Glosa del Gasto</label>
+                    <input type="text" id="exp-note" placeholder="Ej: Supermercado Lider, Pasaje de bus, Farmacia"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                 </div>
 
@@ -396,12 +397,12 @@
         </div>
     </div>
 
-    <!-- Modal Registrar Ingreso (DJ / Eventos) -->
+    <!-- Modal Registrar Ingreso / Sueldo / Venta -->
     <div id="income-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-compact-disc text-emerald-400"></i> Registrar Ingreso (DJ / Evento)
+                    <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i> Registrar Ingreso / Sueldo
                 </h3>
                 <button onclick="closeModal('income-modal')" class="text-slate-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -412,31 +413,31 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5">Atajo Rápido de Ingreso</label>
                     <div class="flex gap-2">
-                        <button type="button" onclick="presetIncome(541091, 'Sueldo Líquido Mensual')" class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-emerald-400 rounded-xl border border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all">
-                            <i class="fa-solid fa-briefcase"></i> Sueldo ($541.091)
+                        <button type="button" onclick="presetIncome(currentUser?.monthly_income || 500000, 'Sueldo Líquido Mensual')" class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-emerald-400 rounded-xl border border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-briefcase"></i> Mi Sueldo
                         </button>
-                        <button type="button" onclick="presetIncome('', '')" class="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 transition-all">
-                            <i class="fa-solid fa-compact-disc"></i> Evento DJ
+                        <button type="button" onclick="presetIncome('', 'Ingreso Extra')" class="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-plus-circle"></i> Ingreso Extra / Venta
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto Ganado (CLP)</label>
-                    <input type="number" id="inc-amount" required min="1" step="any" placeholder="Ej: 541091"
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto del Ingreso (CLP)</label>
+                    <input type="number" id="inc-amount" required min="1" step="any" placeholder="Ej: 500000"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">¿A qué cuenta fue ingresado?</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta Destino (¿A qué cuenta ingresó el dinero?)</label>
                     <select id="inc-account" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Detalle del Evento / Pago</label>
-                    <input type="text" id="inc-note" placeholder="Ej: Evento DJ Pub o Efectivo Matrimonio" required
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">📝 Detalle o Fuente del Ingreso</label>
+                    <input type="text" id="inc-note" placeholder="Ej: Sueldo del mes, Venta realizada, Freelance" required
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm">
                 </div>
 
@@ -457,7 +458,7 @@
         <div class="glass-modal w-full max-w-md rounded-2xl border border-slate-700 p-6 space-y-4 relative shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo
+                    <i class="fa-solid fa-arrow-right-arrow-left text-teal-400"></i> Transferir Saldo Entre Cuentas
                 </h3>
                 <button onclick="closeModal('transfer-modal')" class="text-slate-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -466,24 +467,25 @@
 
             <form id="transfer-form" onsubmit="handleTransferSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto a Mover (CLP)</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto a Transferir (CLP)</label>
                     <input type="number" id="trans-amount" required min="1" step="any" placeholder="Ej: 15000"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Desde (Cuenta Origen)</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">🏦 Banco / Cuenta Origen (¿Desde qué cuenta se saca el dinero?)</label>
                     <select id="trans-source" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Hacia (Cuenta Destino)</label>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">🎯 Banco / Cuenta Destino (¿A qué cuenta se envía el dinero?)</label>
                     <select id="trans-dest" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 text-sm">
                         <!-- Llenado dinámico -->
                     </select>
                 </div>
+
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Nota (Opcional)</label>
@@ -1280,15 +1282,27 @@
             const transDestSelect = document.getElementById('trans-dest');
             const incAccSelect = document.getElementById('inc-account');
 
-            const accOptions = cachedAccounts.map(acc => `<option value="${acc.id}">${acc.name} (${formatCLP(acc.balance)})</option>`).join('');
+            const getAccountLabel = (acc) => {
+                let icon = '🏦';
+                if (acc.name.includes('CuentaRUT')) icon = '💳';
+                else if (acc.name.includes('Mercado Pago')) icon = '📱';
+                else if (acc.name.includes('Efectivo') || acc.name.includes('Billetera')) icon = '💵';
+                else if (acc.name.includes('Ahorro')) icon = '🐷';
+                return `${icon} ${acc.name} (Saldo: ${formatCLP(acc.balance)})`;
+            };
+
+            const accOptions = cachedAccounts.map(acc => `<option value="${acc.id}">${getAccountLabel(acc)}</option>`).join('');
             if (expAccSelect) expAccSelect.innerHTML = accOptions;
             if (transSourceSelect) transSourceSelect.innerHTML = accOptions;
             if (transDestSelect) transDestSelect.innerHTML = accOptions;
             if (incAccSelect) incAccSelect.innerHTML = accOptions;
 
             const expCatSelect = document.getElementById('exp-category');
-            if (expCatSelect) expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+            if (expCatSelect) {
+                expCatSelect.innerHTML = cachedCategories.map(cat => `<option value="${cat.id}">🏷️ ${cat.name}</option>`).join('');
+            }
         }
+
 
         async function quickExpense(name, amount, accountName, categoryName) {
             let acc = (cachedAccounts || []).find(a => a.name === accountName);
@@ -1386,7 +1400,8 @@
                 const response = await fetch('/transactions/income', {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ amount, account_id, note: note || 'Ingreso Evento DJ' })
+                    body: JSON.stringify({ amount, account_id, note: note || 'Ingreso de Dinero' })
+
                 });
 
                 if (response.ok) {
