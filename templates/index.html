@@ -1145,34 +1145,35 @@
             
             const netEl = document.getElementById('report-net');
             netEl.innerText = formatCLP(data.net_savings);
-            netEl.className = `text-lg font-bold mt-1 ${data.net_savings >= 0 ? 'text-indigo-300' : 'text-rose-400'}`;
+            netEl.className = `text-lg font-extrabold mt-1 ${data.net_savings >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
 
             // Recomendaciones
             const recBox = document.getElementById('report-recommendations');
             recBox.innerHTML = data.recommendations.map(rec => `
-                <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex items-start gap-2">
-                    <span class="text-amber-400 text-sm mt-0.5">💡</span>
-                    <span>${rec}</span>
+                <div class="p-3.5 rounded-2xl bg-white border border-amber-200 text-slate-800 flex items-start gap-3 shadow-sm">
+                    <span class="text-amber-500 text-base mt-0.5 shrink-0">💡</span>
+                    <span class="font-semibold text-xs leading-relaxed text-slate-800">${rec}</span>
                 </div>
             `).join('');
 
             // Categorías
             const catBox = document.getElementById('report-categories');
             if (!data.categories_breakdown || data.categories_breakdown.length === 0) {
-                catBox.innerHTML = `<div class="text-slate-400 italic text-xs py-2 text-center">Sin gastos registrados en este mes</div>`;
+                catBox.innerHTML = `<div class="text-slate-500 italic text-xs py-3 text-center bg-slate-50 rounded-2xl border border-slate-200">Sin gastos registrados en este mes</div>`;
                 return;
             }
 
             catBox.innerHTML = data.categories_breakdown.map(c => `
-                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
+                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-white border border-slate-200 text-xs shadow-sm hover:border-indigo-300 transition-all">
                     <div class="space-y-0.5">
-                        <div class="font-medium text-slate-200">${c.category_name}</div>
-                        <div class="text-[10px] text-slate-400">${c.percentage_used}% del presupuesto mensual</div>
+                        <div class="font-bold text-slate-800 text-sm">${c.category_name}</div>
+                        <div class="text-[11px] text-slate-500 font-medium">${c.percentage_used}% del presupuesto mensual</div>
                     </div>
-                    <div class="font-bold text-rose-400">-${formatCLP(c.total_spent)}</div>
+                    <div class="font-extrabold text-rose-600 text-sm">-${formatCLP(c.total_spent)}</div>
                 </div>
             `).join('');
         }
+
 
         async function fetchCategories() {
             try {
