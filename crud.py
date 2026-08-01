@@ -26,41 +26,60 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # FUNCIONES DE USUARIO & AUTENTICACIÓN
 # ==========================================
 def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(func.lower(models.User.email) == email.lower().strip()).first()
+    if not email:
+        return None
+    clean_email = email.strip().lower()
+    return db.query(models.User).filter(models.User.email == clean_email).first()
 
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 def create_user_with_defaults(db: Session, name: str, email: str, password: str = None, google_id: str = None, picture: str = None):
-    existing = get_user_by_email(db, email)
-    if existing:
-        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado")
+    clean_email = email.strip().lower()
+    
+    user = db.query(models.User).filter(models.User.email == clean_email).first()
+    if user:
+        return user
 
     hashed_pw = hash_password(password) if password else None
 
     db_user = models.User(
         name=name.strip(),
-        email=email.lower().strip(),
+        email=clean_email,
         hashed_password=hashed_pw,
         google_id=google_id,
         picture=picture
     )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
 
-    # Crear cuentas por defecto para el nuevo usuario
-    for acc in INITIAL_ACCOUNTS:
-        acc_obj = models.Account(user_id=db_user.id, name=acc["name"], balance=0.0)
-        db.add(acc_obj)
+    try:
+        db.add(db_user)
+        db.commit()
+    except Exception as e:
+        print("[CREATE USER COMMIT FAILED]:", e)
+        db.rollback()
+        db.expunge_all()
+        return db.query(models.User).filter(models.User.email == clean_email).first()
 
-    # Crear categorías por defecto para el nuevo usuario
-    for cat in INITIAL_CATEGORIES:
-        cat_obj = models.Category(user_id=db_user.id, name=cat["name"], monthly_budget=cat["monthly_budget"])
-        db.add(cat_obj)
 
-    db.commit()
+
+
+    try:
+        for acc in INITIAL_ACCOUNTS:
+            acc_obj = models.Account(user_id=db_user.id, name=acc["name"], balance=0.0)
+            db.add(acc_obj)
+
+        for cat in INITIAL_CATEGORIES:
+            cat_obj = models.Category(user_id=db_user.id, name=cat["name"], monthly_budget=cat["monthly_budget"])
+            db.add(cat_obj)
+
+        db.commit()
+    except Exception as e:
+        print("[INITIAL ACCOUNTS/CATS EXCEPTION]:", e)
+        db.rollback()
+
+
     return db_user
+
 
 
 def authenticate_user_email(db: Session, email: str, password: str):

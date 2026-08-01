@@ -11,63 +11,79 @@ import models
 import schemas
 import crud
 from database import engine, get_db, Base
-from seed import seed_database
+from seed import seed_database, INITIAL_ACCOUNTS, INITIAL_CATEGORIES
 
-# Inicializar Tablas en la Base de Datos SQLite/PostgreSQL si no existen
+
+from sqlalchemy import text
+
+def run_auto_migrations():
+    Base.metadata.create_all(bind=engine)
+    with engine.connect() as conn:
+        for table in ["account", "category", "transaction"]:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER;"))
+                conn.commit()
+            except Exception:
+                pass
+
+
+try:
+    run_auto_migrations()
+except Exception as e:
+    print("[MIGRATION SETUP NOTICE]", e)
+
 Base.metadata.create_all(bind=engine)
 
 # Configuración de PIN de Seguridad de Respaldo (por defecto: 2771)
 APP_PIN = os.getenv("APP_PIN", "2771")
 
-
-# Helper para obtener o crear el usuario predeterminado de respaldo (PIN Login / Legacy)
 def get_or_create_default_user(db: Session):
-    user = crud.get_user_by_email(db, "omar@finanzas.local")
-    if not user:
-        user = crud.create_user_with_defaults(
-            db, name="Omar", email="omar@finanzas.local", password=APP_PIN
-        )
+    all_u = [u for u in db.query(models.User).all() if u is not None]
+    if all_u:
+        return all_u[0]
+    return crud.create_user_with_defaults(
+        db, name="Omar", email="omar@finanzas.local", password=APP_PIN
+    )
 
-        # Migrar datos huérfanos sin user_id al usuario Omar si existieran
-        db.query(models.Account).filter(models.Account.user_id == None).update({"user_id": user.id})
-        db.query(models.Category).filter(models.Category.user_id == None).update({"user_id": user.id})
-        db.query(models.Transaction).filter(models.Transaction.user_id == None).update({"user_id": user.id})
-        db.commit()
 
-    return user
+
 
 
 # Inyección de Dependencia para Identificar al Usuario Autenticado
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.User:
-    # 1. Verificar encabezado Authorization (Bearer token)
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        user_id_str = auth_header.split(" ")[1]
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if auth_header and auth_header.lower().startswith("bearer "):
+        token_str = auth_header.split(" ")[1]
         try:
-            user_id = int(user_id_str)
-            user = crud.get_user_by_id(db, user_id)
-            if user:
-                return user
+            uid = int(token_str)
+            u = crud.get_user_by_id(db, uid)
+            if u:
+                return u
         except ValueError:
             pass
 
-    # 2. Verificar encabezado x-app-user-id
     custom_uid = request.headers.get("x-app-user-id")
     if custom_uid:
         try:
-            user_id = int(custom_uid)
-            user = crud.get_user_by_id(db, user_id)
-            if user:
-                return user
+            uid = int(custom_uid)
+            u = crud.get_user_by_id(db, uid)
+            if u:
+                return u
         except ValueError:
             pass
 
-    # 3. Soporte para PIN Legacy o parámetro pin (asigna al usuario Omar)
     user_pin = request.headers.get("x-app-pin") or request.query_params.get("pin")
     if user_pin == APP_PIN:
-        return get_or_create_default_user(db)
+        def_user = get_or_create_default_user(db)
+        if def_user:
+            return def_user
 
     raise HTTPException(status_code=401, detail="No autorizado. Inicia sesión o ingresa tu PIN.")
+
+
+
+
+
 
 
 # Crear App FastAPI
@@ -98,19 +114,33 @@ def check_pin(login: schemas.PinLogin, db: Session = Depends(get_db)):
     if login.pin != APP_PIN:
         raise HTTPException(status_code=401, detail="PIN de acceso incorrecto")
     user = get_or_create_default_user(db)
-    return {"status": "ok", "message": "Acceso concedido", "user_id": user.id, "name": user.name}
+    u_id = user.id if user else 1
+    u_name = user.name if user else "Omar"
+    return {"status": "ok", "message": "Acceso concedido", "user_id": u_id, "name": u_name}
+
 
 
 @app.post("/api/auth/register", response_model=schemas.TokenResponse)
 def register_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing = crud.get_user_by_email(db, user_data.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado")
+
     user = crud.create_user_with_defaults(
         db, name=user_data.name, email=user_data.email, password=user_data.password
     )
+    if not user:
+        user = crud.get_user_by_email(db, user_data.email)
+
+    u_id = user.id if user else 1
     return {
-        "access_token": str(user.id),
+        "access_token": str(u_id),
         "token_type": "bearer",
         "user": user
     }
+
+
+
 
 
 @app.post("/api/auth/login", response_model=schemas.TokenResponse)
@@ -162,8 +192,10 @@ def google_auth(google_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
                 user.picture = picture
             db.commit()
 
+        user = user or crud.get_user_by_email(db, email)
+        u_id = user.id if user else 1
         return {
-            "access_token": str(user.id),
+            "access_token": str(u_id),
             "token_type": "bearer",
             "user": user
         }
@@ -193,11 +225,14 @@ def google_fast_auth(fast_data: schemas.GoogleFastAuth, db: Session = Depends(ge
             user.picture = picture
             db.commit()
 
+    user = user or crud.get_user_by_email(db, email)
+    u_id = user.id if user else 1
     return {
-        "access_token": str(user.id),
+        "access_token": str(u_id),
         "token_type": "bearer",
         "user": user
     }
+
 
 
 
@@ -215,7 +250,7 @@ def create_expense(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.record_expense(db, expense, user_id=current_user.id)
+    return crud.record_expense(db, expense, user_id=current_user.id if current_user else 1)
 
 
 @app.post("/transactions/transfer", response_model=schemas.TransactionResponse, status_code=201)
@@ -224,7 +259,7 @@ def create_transfer(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.record_transfer(db, transfer, user_id=current_user.id)
+    return crud.record_transfer(db, transfer, user_id=current_user.id if current_user else 1)
 
 
 @app.post("/transactions/income", response_model=schemas.TransactionResponse, status_code=201)
@@ -233,7 +268,7 @@ def create_income(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.record_income(db, income, user_id=current_user.id)
+    return crud.record_income(db, income, user_id=current_user.id if current_user else 1)
 
 
 @app.delete("/transactions/{transaction_id}")
@@ -242,7 +277,8 @@ def delete_transaction(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.delete_transaction(db, transaction_id, user_id=current_user.id)
+    return crud.delete_transaction(db, transaction_id, user_id=current_user.id if current_user else 1)
+
 
 
 @app.get("/dashboard", response_model=schemas.DashboardSummary)
@@ -250,7 +286,8 @@ def get_dashboard(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.get_dashboard_summary(db, user_id=current_user.id)
+    return crud.get_dashboard_summary(db, user_id=current_user.id if current_user else 1
+)
 
 
 @app.get("/api/accounts", response_model=list[schemas.AccountResponse])
@@ -258,7 +295,8 @@ def read_accounts(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.get_accounts(db, user_id=current_user.id)
+    return crud.get_accounts(db, user_id=current_user.id if current_user else 1
+)
 
 
 @app.get("/api/categories", response_model=list[schemas.CategoryResponse])
@@ -266,7 +304,8 @@ def read_categories(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.get_categories(db, user_id=current_user.id)
+    return crud.get_categories(db, user_id=current_user.id if current_user else 1
+)
 
 
 @app.get("/api/transactions")
@@ -275,7 +314,8 @@ def read_transactions(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.get_recent_transactions(db, user_id=current_user.id, limit=limit)
+    return crud.get_recent_transactions(db, user_id=current_user.id if current_user else 1
+, limit=limit)
 
 
 @app.get("/api/monthly-report")
@@ -291,7 +331,7 @@ def get_monthly_report(
         year = now.year
     if not month:
         month = now.month
-    return crud.get_monthly_report(db, user_id=current_user.id, year=year, month=month)
+    return crud.get_monthly_report(db, user_id=current_user.id if current_user else 1, year=year, month=month)
 
 
 @app.post("/api/reset-database")
@@ -299,7 +339,8 @@ def reset_database(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.reset_database(db, user_id=current_user.id)
+    return crud.reset_database(db, user_id=current_user.id if current_user else 1)
+
 
 
 # Servidor directo si se ejecuta 'python app.py'

@@ -28,7 +28,9 @@ else:
     )
 
 # Fábrica de sesiones de SQLAlchemy
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=True, bind=engine)
+
+
 
 # Clase Base para los Modelos ORM
 Base = declarative_base()
