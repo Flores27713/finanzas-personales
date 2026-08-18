@@ -203,6 +203,13 @@ def get_categories(db: Session, user_id: int):
     ensure_user_defaults(db, user_id)
     return db.query(models.Category).filter(models.Category.user_id == user_id).all()
 
+def create_category(db: Session, category: schemas.CategoryCreate, user_id: int):
+    new_cat = models.Category(name=category.name, monthly_budget=category.monthly_budget, user_id=user_id)
+    db.add(new_cat)
+    db.commit()
+    db.refresh(new_cat)
+    return new_cat
+
 def get_category_by_id(db: Session, category_id: int, user_id: int):
     return db.query(models.Category).filter(models.Category.id == category_id, models.Category.user_id == user_id).first()
 

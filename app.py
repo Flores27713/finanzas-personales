@@ -369,8 +369,15 @@ def read_categories(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return crud.get_categories(db, user_id=current_user.id if current_user else 1
-)
+    return crud.get_categories(db, user_id=current_user.id if current_user else 1)
+
+@app.post("/api/categories", response_model=schemas.CategoryResponse, status_code=201)
+def create_category(
+    category: schemas.CategoryCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return crud.create_category(db, category, user_id=current_user.id if current_user else 1)
 
 
 @app.get("/api/transactions")
