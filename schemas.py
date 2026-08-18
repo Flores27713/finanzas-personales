@@ -76,6 +76,7 @@ class AccountResponse(AccountBase):
 class CategoryBase(BaseModel):
     name: str
     monthly_budget: float
+    is_fixed: bool = False
 
 class CategoryCreate(CategoryBase):
     pass
@@ -126,6 +127,7 @@ class CategorySpent(BaseModel):
     monthly_budget: float
     total_spent: float
     percentage_used: float
+    is_fixed: bool = False
 
 class DashboardSummary(BaseModel):
     total_balance: float
@@ -135,6 +137,8 @@ class DashboardSummary(BaseModel):
     days_remaining_in_month: int
     committed_expenses: float = 0.0
     free_balance: float = 0.0
+    monthly_income: float = 0.0
+    credit_debt: float = 0.0
 
 
 class PinLogin(BaseModel):

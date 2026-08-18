@@ -40,6 +40,12 @@ def run_auto_migrations():
         except Exception:
             pass
 
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE category ADD COLUMN is_fixed BOOLEAN DEFAULT FALSE;"))
+    except Exception:
+        pass
+
     for table in ["account", "category", "transaction"]:
         try:
             with engine.begin() as conn:

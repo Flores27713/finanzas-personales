@@ -61,6 +61,7 @@ class Category(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     name = Column(String, nullable=False)
     monthly_budget = Column(Float, default=0.0, nullable=False)
+    is_fixed = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="categories")
     transactions = relationship("Transaction", back_populates="category")

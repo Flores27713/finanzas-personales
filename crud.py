@@ -204,7 +204,7 @@ def get_categories(db: Session, user_id: int):
     return db.query(models.Category).filter(models.Category.user_id == user_id).all()
 
 def create_category(db: Session, category: schemas.CategoryCreate, user_id: int):
-    new_cat = models.Category(name=category.name, monthly_budget=category.monthly_budget, user_id=user_id)
+    new_cat = models.Category(name=category.name, monthly_budget=category.monthly_budget, is_fixed=category.is_fixed, user_id=user_id)
     db.add(new_cat)
     db.commit()
     db.refresh(new_cat)
@@ -394,16 +394,22 @@ def get_dashboard_summary(db: Session, user_id: int):
             "category_name": cat.name,
             "monthly_budget": cat.monthly_budget,
             "total_spent": total_spent,
-            "percentage_used": round(percentage, 1)
+            "percentage_used": round(percentage, 1),
+            "is_fixed": cat.is_fixed
         })
 
-    liquid_accounts = [acc for acc in accounts if acc.name in ["CuentaRUT", "Mercado Pago Disponible", "Efectivo (Billetera)"]]
-    liquid_balance = sum(max(0.0, acc.balance) for acc in liquid_accounts)
+    user = get_user_by_id(db, user_id)
+    monthly_income = user.monthly_income if user else 0.0
+
+    liquid_accounts = [acc for acc in accounts if acc.account_type != "Tarjeta de Crédito"]
+    liquid_balance = sum(acc.balance for acc in liquid_accounts)
+
+    credit_accounts = [acc for acc in accounts if acc.account_type == "Tarjeta de Crédito"]
+    credit_debt = sum(acc.balance for acc in credit_accounts) # Balance on CC is usually represented negatively
 
     committed_expenses = 0.0
     for cat_item in categories_summary:
-        name_lower = cat_item["category_name"].lower()
-        if "arriendo" in name_lower or "fijo" in name_lower:
+        if cat_item.get("is_fixed", False):
             pending = max(0.0, cat_item["monthly_budget"] - cat_item["total_spent"])
             committed_expenses += pending
 
@@ -417,7 +423,9 @@ def get_dashboard_summary(db: Session, user_id: int):
         "daily_hormiga_limit": daily_hormiga_limit,
         "days_remaining_in_month": days_remaining,
         "committed_expenses": committed_expenses,
-        "free_balance": free_balance
+        "free_balance": free_balance,
+        "monthly_income": monthly_income,
+        "credit_debt": credit_debt
     }
 
 

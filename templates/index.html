@@ -257,6 +257,12 @@
                     <span class="px-3 py-1.5 rounded-xl bg-white/15 text-emerald-200 font-semibold flex items-center gap-1.5">
                         <i class="fa-solid fa-shield-check text-emerald-200"></i> Libre Real: <strong id="free-balance">$0</strong>
                     </span>
+                    <span class="px-3 py-1.5 rounded-xl bg-white/15 text-rose-200 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-credit-card text-rose-200"></i> Deuda TC: <strong id="credit-debt">$0</strong>
+                    </span>
+                    <span class="px-3 py-1.5 rounded-xl bg-white/10 text-indigo-100 font-semibold flex items-center gap-1.5" title="Sueldo/Ingreso Mensual Base">
+                        <i class="fa-solid fa-sack-dollar text-indigo-100"></i> Sueldo: <strong id="monthly-income-disp">$0</strong>
+                    </span>
                     <span class="px-2.5 py-1.5 rounded-xl bg-white/10 text-indigo-200 flex items-center gap-1.5">
                         <i class="fa-regular fa-calendar text-indigo-200"></i> <span id="days-remaining">-- días</span>
                     </span>
@@ -1107,6 +1113,12 @@
                 document.getElementById('days-remaining').innerText = `${data.days_remaining_in_month} días restantes`;
                 document.getElementById('committed-expenses').innerText = formatCLP(data.committed_expenses || 0);
                 document.getElementById('free-balance').innerText = formatCLP(data.free_balance || 0);
+                
+                const creditDebtEl = document.getElementById('credit-debt');
+                if (creditDebtEl) creditDebtEl.innerText = formatCLP(data.credit_debt || 0);
+                
+                const incomeEl = document.getElementById('monthly-income-disp');
+                if (incomeEl) incomeEl.innerText = formatCLP(data.monthly_income || 0);
 
                 // Render Cuentas
                 cachedAccounts = data.accounts;
@@ -1979,11 +1991,12 @@
             if (e.target.value === 'new_cat') {
                 const newCatName = prompt("Ingresa el nombre de la nueva destinación (ej. Uber, Comida, etc.):");
                 if (newCatName && newCatName.trim() !== '') {
+                    const isFixed = confirm("¿Es este un gasto fijo mensual (ej. arriendo, Netflix, internet)?\n\n[Aceptar = Sí] - [Cancelar = No]");
                     try {
                         const response = await fetch('/api/categories', {
                             method: 'POST',
                             headers: getAuthHeaders(),
-                            body: JSON.stringify({ name: newCatName.trim(), monthly_budget: 0 })
+                            body: JSON.stringify({ name: newCatName.trim(), monthly_budget: 0, is_fixed: isFixed })
                         });
                         if (response.ok) {
                             await refreshData();
