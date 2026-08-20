@@ -9,6 +9,23 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import models
+
+# Set sqlalchemy.url dynamically
+db_url = os.getenv("DATABASE_URL")
+if db_url:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    config.set_main_option("sqlalchemy.url", db_url)
+else:
+    # Fallback for local sqlite
+    config.set_main_option("sqlalchemy.url", "sqlite:///finance.db")
+
+target_metadata = models.Base.metadata
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -18,11 +35,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import models
-target_metadata = models.Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
