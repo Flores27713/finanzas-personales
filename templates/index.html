@@ -386,7 +386,12 @@
 
         <!-- Historial de Transacciones -->
         <section class="space-y-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Últimas Transacciones</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Últimas Transacciones</h2>
+                <button onclick="downloadExport()" class="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 hover:bg-emerald-100 transition-all">
+                    <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+                </button>
+            </div>
             <div class="glass-card rounded-2xl p-4 overflow-hidden">
                 <div class="divide-y divide-slate-200" id="transactions-list">
                     <!-- Se llena dinámicamente -->
@@ -837,47 +842,6 @@
             }
         }
 
-        async function promptGoogleSignIn() {
-            let email = prompt("🌐 Iniciar Sesión Rápida con Google:\n\nIngresa tu correo electrónico de Google (ej: omar.flores@gmail.com):");
-            if (!email) return;
-
-            email = email.trim();
-            const errorMsg = document.getElementById('auth-error');
-
-            try {
-                const res = await fetch('/api/auth/google-fast', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    authUserId = data.access_token;
-                    localStorage.setItem('app_user_id', authUserId);
-                    currentUser = data.user;
-                    updateUserHeaderUI(data.user);
-                    document.getElementById('auth-lockscreen').classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
-                    if (errorMsg) errorMsg.classList.add('hidden');
-                    showToast(`¡Bienvenido, ${data.user.name}!`);
-                    refreshData();
-                } else {
-                    const err = await res.json();
-                    if (errorMsg) {
-                        errorMsg.innerText = err.detail || 'Error al iniciar sesión con Google';
-                        errorMsg.classList.remove('hidden');
-                    }
-                }
-            } catch (err) {
-                if (errorMsg) {
-                    errorMsg.innerText = 'Error al conectar con el servidor.';
-                    errorMsg.classList.remove('hidden');
-                }
-            }
-        }
-
-
         async function handlePinLogin(event) {
             event.preventDefault();
             const pinInput = document.getElementById('input-pin').value;
@@ -997,6 +961,19 @@
         }
 
         function updateFunnyAlert(totalSpent, totalBudget) {
+            if (totalSpent === 0) {
+                const box = document.getElementById('funny-alert-box');
+                const iconEl = document.getElementById('funny-alert-icon');
+                const titleEl = document.getElementById('funny-alert-title');
+                const msgEl = document.getElementById('funny-alert-msg');
+                box.className = 'glass-card rounded-2xl p-4 border-l-4 border-emerald-500 flex items-center gap-3 transition-all duration-300 shadow-lg';
+                iconEl.className = 'w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0';
+                iconEl.innerHTML = '<i class="fa-solid fa-piggy-bank"></i>';
+                titleEl.innerText = "¡TODO EN ORDEN!";
+                msgEl.innerText = '"Aún no has gastado nada este mes, tu billetera está a salvo... por ahora."';
+                return;
+            }
+            
             const pct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
             const alertData = FUNNY_QUOTES.find(q => pct <= q.maxPct) || FUNNY_QUOTES[FUNNY_QUOTES.length - 1];
 
@@ -1101,6 +1078,15 @@
         }
 
 
+
+        function downloadExport() {
+            if (authUserId) {
+                window.location.href = `/api/transactions/export?token=${authUserId}`;
+            } else {
+                showToast("No estás autenticado");
+            }
+        }
+        
         async function fetchDashboard() {
             try {
                 const res = await fetch('/dashboard', { headers: getAuthHeaders() });

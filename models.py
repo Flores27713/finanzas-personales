@@ -21,6 +21,7 @@ class User(Base):
     accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+    savings_goals = relationship("SavingsGoal", back_populates="user", cascade="all, delete-orphan")
 
 
     def __repr__(self):
@@ -92,3 +93,15 @@ class Transaction(Base):
 
     def __repr__(self):
         return f"<Transaction(id={self.id}, type='{self.transaction_type}', amount={self.amount}, date={self.date})>"
+
+class SavingsGoal(Base):
+    __tablename__ = "savings_goal"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    target_amount = Column(Float, nullable=False)
+    current_saved = Column(Float, default=0.0, nullable=False)
+    target_date = Column(DateTime, nullable=False)
+
+    user = relationship("User", back_populates="savings_goals")

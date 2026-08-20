@@ -129,16 +129,33 @@ class CategorySpent(BaseModel):
     percentage_used: float
     is_fixed: bool = False
 
+
+class SavingsGoalCreate(BaseModel):
+    name: str = Field(..., description="Nombre de la meta de ahorro")
+    target_amount: float = Field(..., gt=0, description="Monto objetivo a ahorrar")
+    target_date: datetime = Field(..., description="Fecha límite para cumplir la meta")
+
+class SavingsGoalResponse(BaseModel):
+    id: int
+    name: str
+    target_amount: float
+    current_saved: float
+    target_date: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class DashboardSummary(BaseModel):
     total_balance: float
     accounts: List[AccountResponse]
     categories_summary: List[CategorySpent]
+    savings_goals: List[SavingsGoalResponse] = Field(default_factory=list)
     daily_hormiga_limit: float
     days_remaining_in_month: int
     committed_expenses: float = 0.0
     free_balance: float = 0.0
     monthly_income: float = 0.0
     credit_debt: float = 0.0
+    monthly_savings_commitment: float = 0.0
 
 
 class PinLogin(BaseModel):

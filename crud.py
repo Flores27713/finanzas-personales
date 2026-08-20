@@ -15,11 +15,24 @@ MONTH_NAMES = {
     9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
 }
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 def hash_password(password: str) -> str:
-    return hashlib.sha256((password + "finanzas_secret_salt_2026").encode('utf-8')).hexdigest()
+    return pwd_context.hash(password)
+
+def verify_password_fallback(plain_password: str, hashed_password: str) -> bool:
+    return hashlib.sha256((plain_password + "finanzas_secret_salt_2026").encode('utf-8')).hexdigest() == hashed_password
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return hash_password(plain_password) == hashed_password
+    try:
+        if hashed_password.startswith("$2b$") or hashed_password.startswith("$2a$"):
+            return pwd_context.verify(plain_password, hashed_password)
+        else:
+            return verify_password_fallback(plain_password, hashed_password)
+    except Exception:
+        return False
 
 
 # ==========================================
@@ -85,7 +98,7 @@ def create_user_with_defaults(db: Session, name: str, email: str, password: str 
         ensure_user_defaults(db, user.id)
         return user
 
-    hashed_pw = hash_password(password) if password else None
+    hashed_pw = get_password_hash(password) if password else None
 
     db_user = models.User(
         name=name.strip(),
@@ -112,10 +125,17 @@ def create_user_with_defaults(db: Session, name: str, email: str, password: str 
 
 def authenticate_user_email(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
-    if not user:
+    if not user or not user.hashed_password:
         raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
-    if not user.hashed_password or not verify_password(password, user.hashed_password):
+    
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Correo electrónico o contraseña incorrectos")
+        
+    # Migración silenciosa
+    if not (user.hashed_password.startswith("$2b$") or user.hashed_password.startswith("$2a$")):
+        user.hashed_password = hash_password(password)
+        db.commit()
+
     ensure_user_defaults(db, user.id)
     return user
 
@@ -358,6 +378,42 @@ def get_recent_transactions(db: Session, user_id: int, limit: int = 20):
     return result
 
 
+
+# ==========================================
+# METAS DE AHORRO
+# ==========================================
+def get_savings_goals(db: Session, user_id: int):
+    return db.query(models.SavingsGoal).filter(models.SavingsGoal.user_id == user_id).all()
+
+def create_savings_goal(db: Session, goal: schemas.SavingsGoalCreate, user_id: int):
+    db_goal = models.SavingsGoal(
+        user_id=user_id,
+        name=goal.name,
+        target_amount=goal.target_amount,
+        target_date=goal.target_date,
+        current_saved=0.0
+    )
+    db.add(db_goal)
+    db.commit()
+    db.refresh(db_goal)
+    return db_goal
+
+def update_savings_goal(db: Session, goal_id: int, user_id: int, amount_to_add: float):
+    goal = db.query(models.SavingsGoal).filter(models.SavingsGoal.id == goal_id, models.SavingsGoal.user_id == user_id).first()
+    if goal:
+        goal.current_saved += amount_to_add
+        db.commit()
+        db.refresh(goal)
+    return goal
+
+def delete_savings_goal(db: Session, goal_id: int, user_id: int):
+    goal = db.query(models.SavingsGoal).filter(models.SavingsGoal.id == goal_id, models.SavingsGoal.user_id == user_id).first()
+    if goal:
+        db.delete(goal)
+        db.commit()
+        return True
+    return False
+
 def get_dashboard_summary(db: Session, user_id: int):
     accounts = get_accounts(db, user_id)
     categories = get_categories(db, user_id)
@@ -413,6 +469,20 @@ def get_dashboard_summary(db: Session, user_id: int):
             pending = max(0.0, cat_item["monthly_budget"] - cat_item["total_spent"])
             committed_expenses += pending
 
+    # Add monthly savings commitment
+    savings_goals = get_savings_goals(db, user_id)
+    monthly_savings_commitment = 0.0
+    for sg in savings_goals:
+        remaining_amount = max(0.0, sg.target_amount - sg.current_saved)
+        # Calculate months remaining
+        from dateutil.relativedelta import relativedelta
+        diff = relativedelta(sg.target_date, now.replace(tzinfo=timezone.utc) if sg.target_date.tzinfo else now)
+        months_remaining = max(1, diff.years * 12 + diff.months)
+        monthly_commitment = remaining_amount / months_remaining
+        monthly_savings_commitment += monthly_commitment
+    
+    committed_expenses += monthly_savings_commitment
+
     free_balance = max(0.0, liquid_balance - committed_expenses)
     daily_hormiga_limit = round(free_balance / days_remaining, 0)
 
@@ -420,12 +490,14 @@ def get_dashboard_summary(db: Session, user_id: int):
         "total_balance": total_balance,
         "accounts": accounts,
         "categories_summary": categories_summary,
+        "savings_goals": savings_goals,
         "daily_hormiga_limit": daily_hormiga_limit,
         "days_remaining_in_month": days_remaining,
         "committed_expenses": committed_expenses,
         "free_balance": free_balance,
         "monthly_income": monthly_income,
-        "credit_debt": credit_debt
+        "credit_debt": credit_debt,
+        "monthly_savings_commitment": monthly_savings_commitment
     }
 
 
